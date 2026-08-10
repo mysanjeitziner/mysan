@@ -1,30 +1,29 @@
 
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
   params: Promise<{
-    slug: string
-  }>
-}
+    slug: string;
+  }>;
+};
 
 export default async function ReferenzPage({
   params,
 }: PageProps) {
-  const { slug } = await params
+  const { slug } = await params;
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   /*
    * REFERENZ LADEN
    */
-
   const {
     data: reference,
     error,
   } = await supabase
-    .from('references')
+    .from("references")
     .select(`
       id,
       title,
@@ -39,75 +38,66 @@ export default async function ReferenzPage({
         name
       )
     `)
-    .eq('slug', slug)
-    .eq('published', true)
-    .single()
+    .eq("slug", slug)
+    .eq("published", true)
+    .single();
 
   if (error || !reference) {
-    notFound()
+    notFound();
   }
 
   /*
    * BILDER LADEN
    */
-
-  const {
-    data: images,
-  } = await supabase
-    .from('reference_images')
+  const { data: images } = await supabase
+    .from("reference_images")
     .select(`
       id,
       image_url,
       sort_order
     `)
-    .eq('reference_id', reference.id)
-    .order('sort_order', {
+    .eq("reference_id", reference.id)
+    .order("sort_order", {
       ascending: true,
-    })
+    });
 
   /*
    * KATEGORIE
+   *
+   * Supabase kann die Relation als Array zurückgeben.
    */
-
-  const category = Array.isArray(
-    reference.categories
-  )
+  const category = Array.isArray(reference.categories)
     ? reference.categories[0]
-    : reference.categories
+    : reference.categories;
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white text-[#222222]">
 
-      {/* HEADER */}
-
-      <section className="border-b">
-
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+      <section className="border-b border-gray-100">
         <div className="mx-auto max-w-7xl px-6 py-6 md:px-8">
-
           <Link
             href="/referenzen"
-            className="text-sm text-gray-500 transition hover:text-black"
+            className="text-sm text-gray-500 transition hover:text-[#3C70B7]"
           >
             ← Alle Referenzen
           </Link>
-
         </div>
-
       </section>
 
-      {/* TITEL */}
-
+      {/* =====================================================
+          TITEL
+      ===================================================== */}
       <section className="mx-auto max-w-7xl px-6 pb-10 pt-10 md:px-8 md:pb-14 md:pt-14">
-
         <div className="max-w-4xl">
 
           {category && (
             <div className="mb-4">
-
-              <span className="rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700">
+              <span className="rounded-full bg-[#F4F7FA] px-4 py-2 text-sm font-medium text-[#3C70B7]">
                 {category.name}
               </span>
-
             </div>
           )}
 
@@ -115,9 +105,7 @@ export default async function ReferenzPage({
             {reference.title}
           </h1>
 
-          {(reference.location ||
-            reference.year) && (
-
+          {(reference.location || reference.year) && (
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-gray-500">
 
               {reference.location && (
@@ -133,19 +121,16 @@ export default async function ReferenzPage({
               )}
 
             </div>
-
           )}
 
         </div>
-
       </section>
 
-      {/* HAUPTBILD */}
-
+      {/* =====================================================
+          HAUPTBILD
+      ===================================================== */}
       {images && images.length > 0 && (
-
         <section className="mx-auto max-w-7xl px-6 md:px-8">
-
           <div className="overflow-hidden rounded-2xl bg-gray-100">
 
             <img
@@ -155,15 +140,13 @@ export default async function ReferenzPage({
             />
 
           </div>
-
         </section>
-
       )}
 
-      {/* BESCHREIBUNG */}
-
+      {/* =====================================================
+          BESCHREIBUNG
+      ===================================================== */}
       {reference.description && (
-
         <section className="mx-auto max-w-4xl px-6 py-12 md:px-8 md:py-16">
 
           <div className="whitespace-pre-line text-lg leading-8 text-gray-700">
@@ -171,13 +154,12 @@ export default async function ReferenzPage({
           </div>
 
         </section>
-
       )}
 
-      {/* BILDERGALERIE */}
-
+      {/* =====================================================
+          BILDERGALERIE
+      ===================================================== */}
       {images && images.length > 1 && (
-
         <section className="mx-auto max-w-7xl px-6 pb-16 md:px-8 md:pb-24">
 
           <h2 className="mb-6 text-2xl font-semibold">
@@ -186,40 +168,36 @@ export default async function ReferenzPage({
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
-            {images
-              .slice(1)
-              .map((image, index) => (
+            {images.slice(1).map((image, index) => (
+              <div
+                key={image.id}
+                className="overflow-hidden rounded-2xl bg-gray-100"
+              >
 
-                <div
-                  key={image.id}
-                  className="overflow-hidden rounded-2xl bg-gray-100"
-                >
+                <img
+                  src={image.image_url}
+                  alt={`${reference.title} – Bild ${index + 2}`}
+                  className="aspect-[4/3] w-full object-cover transition duration-500 hover:scale-105"
+                />
 
-                  <img
-                    src={image.image_url}
-                    alt={`${reference.title} – Bild ${index + 2}`}
-                    className="aspect-[4/3] w-full object-cover transition duration-500 hover:scale-105"
-                  />
-
-                </div>
-
-              ))}
+              </div>
+            ))}
 
           </div>
 
         </section>
-
       )}
 
-      {/* ZURÜCK */}
-
-      <section className="border-t">
+      {/* =====================================================
+          ZURÜCK
+      ===================================================== */}
+      <section className="border-t border-gray-100">
 
         <div className="mx-auto max-w-7xl px-6 py-10 md:px-8">
 
           <Link
             href="/referenzen"
-            className="font-medium hover:underline"
+            className="font-medium text-[#3C70B7] transition hover:underline"
           >
             ← Zurück zu allen Referenzen
           </Link>
@@ -229,6 +207,6 @@ export default async function ReferenzPage({
       </section>
 
     </main>
-  )
+  );
 }
 

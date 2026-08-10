@@ -3,22 +3,20 @@ import { createClient } from '@/lib/supabase/server'
 import DeleteReferenceButton from './DeleteReferenceButton'
 
 type Reference = {
-  id: string
-  title: string
-  slug: string
-  location: string | null
-  year: number | null
-  published: boolean
-  featured: boolean
-  category_id: string | null
-  created_at: string
-  categories:
-    | {
-        id: string
-        name: string
-      }
-    | null
-}
+  id: string;
+  title: string;
+  slug: string;
+  location: string | null;
+  year: number | null;
+  published: boolean;
+  featured: boolean;
+  category_id: string | null;
+  created_at: string;
+  categories: {
+    id: string;
+    name: string;
+  }[];
+};
 
 type ReferenceImage = {
   reference_id: string
