@@ -1,625 +1,1097 @@
+import Link from 'next/link'
+import SiteHeader from '@/components/site-header'
+import { createClient } from '@/lib/supabase/server'
 
-import Link from "next/link";
+const MYSAN_BLUE = '#3C70B7'
 
-const references = [
-  {
-    title: "Sanitär",
-    text: "Sanitärinstallationen für Neubauten, Umbauten und Renovationen.",
-    image: "/images/referenzen/sanitaer.jpg",
-  },
-  {
-    title: "Heizung",
-    text: "Moderne Heizsysteme, Sanierungen und zuverlässiger Service.",
-    image: "/images/referenzen/heizung.jpg",
-  },
-  {
-    title: "Umbau & Renovation",
-    text: "Kompetente Lösungen für Bad, Küche und gesamte Gebäudetechnik.",
-    image: "/images/referenzen/umbau.jpg",
-  },
-];
+type Reference = {
+  id: string
+  title: string
+  slug: string
+  location?: string | null
+  year?: number | null
+  published?: boolean
+  featured?: boolean
+}
 
-const news = [
-  {
-    date: "10.08.2026",
-    title: "Unsere aktuellen Projekte",
-    text: "Entdecken Sie unsere neuesten Arbeiten und Referenzen.",
-  },
-  {
-    date: "01.08.2026",
-    title: "Sanitär & Heizung aus einer Hand",
-    text: "Wir begleiten Sie von der Planung bis zur fertigen Installation.",
-  },
-  {
-    date: "15.07.2026",
-    title: "Mysan Jeitziner",
-    text: "Ihr zuverlässiger Partner für Sanitär und Heizung im Wallis.",
-  },
-];
+type ReferenceImage = {
+  id: string
+  reference_id: string
+  image_url: string
+  sort_order?: number | null
+}
 
-export default function HomePage() {
+type News = {
+  id: string
+  title: string
+  slug: string
+  excerpt?: string | null
+  image_url?: string | null
+  published?: boolean
+  featured?: boolean
+  created_at: string
+}
+
+export default async function HomePage() {
+  const supabase = await createClient()
+
+  /*
+   * =========================================================
+   * REFERENZEN
+   * =========================================================
+   */
+
+  const { data: referencesData } = await supabase
+    .from('references')
+    .select(`
+      id,
+      title,
+      slug,
+      location,
+      year,
+      published,
+      featured
+    `)
+    .eq('published', true)
+    .eq('featured', true)
+    .order('created_at', {
+      ascending: false,
+    })
+    .limit(3)
+
+  const references =
+    (referencesData as Reference[] | null) || []
+
+  /*
+   * =========================================================
+   * REFERENZ-BILDER
+   * =========================================================
+   */
+
+  const referenceIds = references.map(
+    (reference) => reference.id
+  )
+
+  let referenceImages: ReferenceImage[] = []
+
+  if (referenceIds.length > 0) {
+    const { data: imagesData } = await supabase
+      .from('reference_images')
+      .select(`
+        id,
+        reference_id,
+        image_url,
+        sort_order
+      `)
+      .in(
+        'reference_id',
+        referenceIds
+      )
+      .order('sort_order', {
+        ascending: true,
+      })
+
+    referenceImages =
+      (imagesData as ReferenceImage[] | null) || []
+  }
+
+  /*
+   * =========================================================
+   * NEWS
+   * =========================================================
+   */
+
+  const { data: newsData } = await supabase
+    .from('news')
+    .select(`
+      id,
+      title,
+      slug,
+      excerpt,
+      image_url,
+      published,
+      featured,
+      created_at
+    `)
+    .eq('published', true)
+    .order('created_at', {
+      ascending: false,
+    })
+    .limit(3)
+
+  const news =
+    (newsData as News[] | null) || []
+
+  /*
+   * =========================================================
+   * HILFSFUNKTIONEN
+   * =========================================================
+   */
+
+  function getReferenceImage(
+    referenceId: string
+  ) {
+    return referenceImages.find(
+      (image) =>
+        image.reference_id === referenceId
+    )?.image_url
+  }
+
+  function formatDate(date: string) {
+    return new Intl.DateTimeFormat(
+      'de-CH',
+      {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }
+    ).format(new Date(date))
+  }
+
   return (
-    <main className="min-h-screen bg-white text-[#222222]">
-      {/* =========================================================
-          LINKER MYsan MARKENSTREIFEN
-      ========================================================= */}
-      <div className="fixed left-0 top-0 z-50 hidden h-screen w-[8px] bg-[#3C70B7] md:block" />
+    <main className="min-h-screen bg-white text-neutral-900">
 
-      {/* =========================================================
+      {/* =====================================================
           HEADER
-      ========================================================= */}
-      <header className="relative z-40 border-b border-gray-100 bg-white">
-        <div className="mx-auto flex h-[90px] max-w-[1500px] items-center justify-between px-6 lg:px-12">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="group flex items-center"
-            aria-label="Mysan Jeitziner Startseite"
-          >
-            <div className="leading-none">
-              <div className="text-[30px] font-light tracking-[-1px] text-[#3C70B7]">
-                mySan
-              </div>
+      ===================================================== */}
 
-              <div className="mt-1 text-[12px] font-semibold uppercase tracking-[4px] text-[#222222]">
-                JEITZINER
-              </div>
-            </div>
-          </Link>
+      <SiteHeader />
 
-          {/* Navigation */}
-          <nav className="hidden items-center gap-8 lg:flex">
-            <Link
-              href="/"
-              className="text-[15px] font-medium text-[#3C70B7]"
-            >
-              Home
-            </Link>
+     {/* =====================================================
+    HERO
+===================================================== */}
 
-            <Link
-              href="/sanitaer"
-              className="text-[15px] font-medium text-gray-700 transition hover:text-[#3C70B7]"
-            >
-              Sanitär
-            </Link>
+<section className="relative min-h-screen overflow-hidden bg-white">
 
-            <Link
-              href="/heizung"
-              className="text-[15px] font-medium text-gray-700 transition hover:text-[#3C70B7]"
-            >
-              Heizung
-            </Link>
+  {/* Blauer linker Rand */}
 
-            <Link
-              href="/referenzen"
-              className="text-[15px] font-medium text-gray-700 transition hover:text-[#3C70B7]"
-            >
-              Referenzen
-            </Link>
+  <div
+    className="absolute left-0 top-0 z-30 h-full w-2"
+    style={{
+      backgroundColor: MYSAN_BLUE,
+    }}
+  />
 
-            <Link
-              href="/news"
-              className="text-[15px] font-medium text-gray-700 transition hover:text-[#3C70B7]"
-            >
-              News
-            </Link>
+  {/* Dezenter Hintergrund */}
 
-            <Link
-              href="/kontakt"
-              className="rounded-full bg-[#3C70B7] px-6 py-3 text-[14px] font-semibold text-white transition hover:bg-[#315f9d]"
-            >
-              Kontakt
-            </Link>
-          </nav>
+  <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-[#F4F7FA]" />
 
-          {/* Mobile menu */}
-          <button
-            type="button"
-            aria-label="Menü öffnen"
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 lg:hidden"
-          >
-            <span className="flex flex-col gap-1.5">
-              <span className="block h-[2px] w-5 bg-[#222222]" />
-              <span className="block h-[2px] w-5 bg-[#222222]" />
-              <span className="block h-[2px] w-5 bg-[#222222]" />
-            </span>
-          </button>
-        </div>
-      </header>
+  {/* =================================================
+      TEXT
+  ================================================= */}
 
-      {/* =========================================================
-          HERO
-      ========================================================= */}
-      <section className="relative min-h-[680px] overflow-hidden bg-[#F4F7FA]">
-        {/* Hintergrundbild */}
-        <div className="absolute inset-0">
-          <img
-            src="/images/hero/mysan-hero.jpg"
-            alt="Mysan Jeitziner Sanitär und Heizung"
-            className="h-full w-full object-cover"
-          />
+  <div className="relative z-20 mx-auto flex min-h-screen max-w-7xl items-start px-8 pb-[42vh] pt-36 md:px-12 md:pb-[38vh] md:pt-40 lg:px-16">
 
-          {/* dunkler Overlay für bessere Lesbarkeit */}
-          <div className="absolute inset-0 bg-black/25" />
+    <div className="max-w-3xl">
 
-          <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/35 to-transparent" />
-        </div>
+      {/* Kleiner blauer Strich */}
 
-        {/* =====================================================
-            AUTO.PNG – TRANSPARENTES OVERLAY
-        ===================================================== */}
-        <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-[60%] overflow-hidden">
-          <img
-            src="/auto.png"
-            alt=""
-            className="absolute right-[-70px] top-[-30px] w-[720px] max-w-none opacity-[0.15]"
-          />
-        </div>
+      <div
+        className="mb-6 h-1 w-16"
+        style={{
+          backgroundColor: MYSAN_BLUE,
+        }}
+      />
 
-        {/* Hero Inhalt */}
-        <div className="relative z-20 mx-auto flex min-h-[680px] max-w-[1500px] items-center px-6 lg:px-20">
-          <div className="max-w-[720px] text-white">
-            <div className="mb-6 flex items-center gap-4">
-              <span className="h-[2px] w-12 bg-[#3C70B7]" />
+      {/* Firma */}
 
-              <span className="text-sm font-semibold uppercase tracking-[4px]">
+      <p
+        className="text-sm font-semibold uppercase tracking-[0.25em]"
+        style={{
+          color: MYSAN_BLUE,
+        }}
+      >
+        mySan Jeitziner
+      </p>
+
+      {/* Haupttitel */}
+
+      <h1 className="mt-5 text-5xl font-light leading-[1.05] tracking-tight text-neutral-900 md:text-7xl lg:text-8xl">
+
+        Ihr
+        <br />
+
+        <span
+          style={{
+            color: MYSAN_BLUE,
+          }}
+        >
+          Sanitär
+        </span>
+
+        <br />
+
+        im Wallis
+
+      </h1>
+
+      {/* Beschreibung */}
+
+      <p className="mt-8 max-w-xl text-xl font-light leading-8 text-neutral-600 md:text-2xl">
+
+        Für sämtliche Sanitärarbeiten
+        <br className="hidden md:block" />
+        in und ums Haus.
+
+      </p>
+
+      {/* Buttons */}
+
+      <div className="mt-10 flex flex-wrap gap-4">
+
+        <Link
+          href="/kontakt"
+          className="inline-flex items-center rounded-full px-7 py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
+          style={{
+            backgroundColor: MYSAN_BLUE,
+          }}
+        >
+          Kontakt aufnehmen
+
+          <span className="ml-3 text-lg">
+            →
+          </span>
+        </Link>
+
+        <Link
+          href="/referenzen"
+          className="inline-flex items-center rounded-full border px-7 py-3.5 text-sm font-semibold transition hover:bg-gray-50"
+          style={{
+            borderColor: MYSAN_BLUE,
+            color: MYSAN_BLUE,
+          }}
+        >
+          Referenzen
+        </Link>
+
+      </div>
+
+    </div>
+
+  </div>
+
+{/* =================================================
+    AUTO – DEZENTES, WEICH AUSLAUFENDES HINTERGRUNDMOTIV
+================================================= */}
+
+<div className="pointer-events-none absolute left-0 right-0 top-0 z-10">
+
+  <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
+
+    <div
+      className="
+        relative
+        overflow-hidden
+        [mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_88%,transparent_100%)]
+        [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_88%,transparent_100%)]
+      "
+    >
+
+      <img
+        src="/auto.png"
+        alt=""
+        aria-hidden="true"
+        className="
+          h-auto
+          w-full
+          object-contain
+          object-left-top
+          opacity-20
+        "
+      />
+
+      {/* Oberer weicher Übergang */}
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          top-0
+          h-32
+          bg-gradient-to-b
+          from-white
+          via-white/40
+          to-transparent
+        "
+      />
+
+      {/* Unterer weicher Übergang */}
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          bottom-0
+          h-40
+          bg-gradient-to-t
+          from-white
+          via-white/50
+          to-transparent
+        "
+      />
+
+    </div>
+
+  </div>
+
+</div>
+
+  {/* =================================================
+      HERZLICH WILLKOMMEN
+  ================================================= */}
+
+  <div className="absolute bottom-8 left-10 z-30 md:left-16">
+
+    <p
+      className="text-sm font-medium tracking-wide"
+      style={{
+        color: MYSAN_BLUE,
+      }}
+    >
+      Herzlich Willkommen
+    </p>
+
+  </div>
+
+  {/* =================================================
+      SCROLL HINWEIS
+  ================================================= */}
+
+  <div className="absolute bottom-8 right-8 z-30 hidden items-center gap-3 text-xs text-neutral-400 md:flex">
+
+    <span>
+      Entdecken
+    </span>
+
+    <span
+      className="h-px w-10"
+      style={{
+        backgroundColor: MYSAN_BLUE,
+      }}
+    />
+
+  </div>
+
+</section>
+      {/* =====================================================
+          INTRO
+      ===================================================== */}
+
+      <section className="relative overflow-hidden">
+
+        <div
+          className="absolute left-0 top-0 h-full w-2"
+          style={{
+            backgroundColor: MYSAN_BLUE,
+          }}
+        />
+
+        <div className="mx-auto max-w-7xl px-8 py-24 md:px-12 md:py-32 lg:px-16">
+
+          <div className="grid gap-16 md:grid-cols-2 md:items-center">
+
+            <div>
+
+              <p
+                className="text-sm font-semibold uppercase tracking-[0.2em]"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
                 Mysan Jeitziner
-              </span>
+              </p>
+
+              <h2 className="mt-5 text-4xl font-light leading-tight tracking-tight md:text-6xl">
+
+                Persönlich.
+                <br />
+
+                Kompetent.
+                <br />
+
+                <span
+                  style={{
+                    color: MYSAN_BLUE,
+                  }}
+                >
+                  Zuverlässig.
+                </span>
+
+              </h2>
+
             </div>
 
-            <h1 className="text-5xl font-light leading-[1.05] tracking-[-2px] sm:text-6xl lg:text-8xl">
-              Ihr Sanitär
-              <br />
-              <span className="font-semibold">im Wallis.</span>
-            </h1>
+            <div>
 
-            <p className="mt-8 max-w-[560px] text-lg leading-8 text-white/90 lg:text-xl">
-              Für sämtliche Sanitär- und Heizungsarbeiten in und ums Haus.
-              Persönlich, zuverlässig und kompetent.
-            </p>
+              <p className="text-lg leading-8 text-neutral-600">
 
-            <div className="mt-10 flex flex-wrap gap-4">
+                Wir sind Ihr Ansprechpartner für
+                Sanitär und Heizung im Wallis.
+
+                <br />
+                <br />
+
+                Von kleinen Reparaturen bis zu
+                kompletten Installationen begleiten
+                wir unsere Kunden kompetent und
+                zuverlässig.
+
+              </p>
+
               <Link
                 href="/kontakt"
-                className="rounded-full bg-[#3C70B7] px-8 py-4 text-sm font-semibold text-white transition hover:bg-[#315f9d]"
+                className="mt-8 inline-flex items-center text-sm font-semibold"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
               >
-                Kontakt aufnehmen
+                Mehr über uns
+                <span className="ml-3">
+                  →
+                </span>
               </Link>
 
-              <Link
-                href="/referenzen"
-                className="rounded-full border border-white/70 bg-white/10 px-8 py-4 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white hover:text-[#222222]"
-              >
-                Referenzen ansehen
-              </Link>
             </div>
+
           </div>
+
         </div>
 
-        {/* Hero Informationsleiste */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 hidden bg-white/95 backdrop-blur md:block">
-          <div className="mx-auto grid max-w-[1500px] grid-cols-3">
-            <div className="border-r border-gray-200 px-10 py-6">
-              <div className="text-sm font-semibold uppercase tracking-[2px] text-[#3C70B7]">
-                Sanitär
-              </div>
-
-              <div className="mt-1 text-sm text-gray-600">
-                Planung · Installation · Service
-              </div>
-            </div>
-
-            <div className="border-r border-gray-200 px-10 py-6">
-              <div className="text-sm font-semibold uppercase tracking-[2px] text-[#3C70B7]">
-                Heizung
-              </div>
-
-              <div className="mt-1 text-sm text-gray-600">
-                Modernisierung · Neubau · Unterhalt
-              </div>
-            </div>
-
-            <div className="px-10 py-6">
-              <div className="text-sm font-semibold uppercase tracking-[2px] text-[#3C70B7]">
-                Wallis
-              </div>
-
-              <div className="mt-1 text-sm text-gray-600">
-                Persönlich für Sie da
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
-      {/* =========================================================
-          INTRO
-      ========================================================= */}
-      <section className="bg-white py-24 lg:py-32">
-        <div className="mx-auto grid max-w-[1300px] gap-16 px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-12">
-          <div>
-            <span className="text-sm font-semibold uppercase tracking-[3px] text-[#3C70B7]">
-              Mysan Jeitziner
-            </span>
-
-            <h2 className="mt-5 text-4xl font-light leading-tight tracking-[-1px] sm:text-5xl">
-              Technik, auf die
-              <br />
-              <span className="font-semibold">Sie zählen können.</span>
-            </h2>
-          </div>
-
-          <div className="max-w-[720px]">
-            <p className="text-lg leading-8 text-gray-600">
-              Ob Neubau, Umbau oder Renovation – Mysan Jeitziner ist Ihr
-              Ansprechpartner für Sanitär und Heizung. Wir planen und
-              realisieren individuelle Lösungen und sorgen dafür, dass
-              Technik zuverlässig funktioniert.
-            </p>
-
-            <p className="mt-6 text-lg leading-8 text-gray-600">
-              Von der ersten Beratung über die fachgerechte Installation bis
-              zum Service und Unterhalt stehen wir persönlich an Ihrer Seite.
-            </p>
-
-            <Link
-              href="/ueber-uns"
-              className="mt-8 inline-flex items-center gap-3 font-semibold text-[#3C70B7]"
-            >
-              Mehr über uns
-              <span className="text-xl">→</span>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================
+      {/* =====================================================
           LEISTUNGEN
-      ========================================================= */}
-      <section className="bg-[#F4F7FA] py-24 lg:py-32">
-        <div className="mx-auto max-w-[1300px] px-6 lg:px-12">
-          <div className="mb-14 max-w-[700px]">
-            <span className="text-sm font-semibold uppercase tracking-[3px] text-[#3C70B7]">
-              Unsere Leistungen
-            </span>
+      ===================================================== */}
 
-            <h2 className="mt-4 text-4xl font-light tracking-[-1px] sm:text-5xl">
-              Sanitär & Heizung
+      <section className="bg-[#F4F7FA]">
+
+        <div className="mx-auto max-w-7xl px-8 py-24 md:px-12 md:py-32 lg:px-16">
+
+          <div className="max-w-2xl">
+
+            <p
+              className="text-sm font-semibold uppercase tracking-[0.2em]"
+              style={{
+                color: MYSAN_BLUE,
+              }}
+            >
+              Unsere Leistungen
+            </p>
+
+            <h2 className="mt-5 text-4xl font-light tracking-tight md:text-6xl">
+
+              Alles rund um
               <br />
-              <span className="font-semibold">aus einer Hand.</span>
+
+              <span
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Sanitär & Heizung
+              </span>
+
             </h2>
+
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="mt-16 grid gap-6 md:grid-cols-2">
+
             {/* Sanitär */}
+
             <Link
               href="/sanitaer"
-              className="group relative min-h-[430px] overflow-hidden bg-white"
+              className="group relative overflow-hidden bg-white p-8 transition hover:-translate-y-1 md:p-12"
             >
-              <img
-                src="/images/leistungen/sanitaer.jpg"
-                alt="Sanitär"
-                className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
+
+              <div
+                className="absolute left-0 top-0 h-full w-1 transition-all group-hover:w-2"
+                style={{
+                  backgroundColor: MYSAN_BLUE,
+                }}
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+              <div className="flex items-start justify-between">
 
-              <div className="absolute bottom-0 left-0 right-0 p-8 text-white lg:p-10">
-                <div className="mb-3 text-sm font-semibold uppercase tracking-[3px] text-[#8eb6e8]">
-                  Leistung
-                </div>
+                <span
+                  className="text-sm font-semibold"
+                  style={{
+                    color: MYSAN_BLUE,
+                  }}
+                >
+                  01
+                </span>
 
-                <h3 className="text-4xl font-light">
-                  <span className="font-semibold">Sanitär</span>
-                </h3>
+                <span
+                  className="text-3xl transition-transform duration-300 group-hover:translate-x-2"
+                  style={{
+                    color: MYSAN_BLUE,
+                  }}
+                >
+                  →
+                </span>
 
-                <p className="mt-3 max-w-[500px] leading-7 text-white/85">
-                  Badezimmer, Wasserinstallationen, Küchen und sämtliche
-                  Sanitärarbeiten rund ums Gebäude.
-                </p>
-
-                <div className="mt-6 font-semibold">
-                  Mehr erfahren <span className="ml-2">→</span>
-                </div>
               </div>
+
+              <h3 className="mt-20 text-4xl font-light">
+                Sanitär
+              </h3>
+
+              <p className="mt-5 max-w-md leading-7 text-neutral-600">
+
+                Sämtliche Sanitärarbeiten für
+                Neubauten, Umbauten und
+                Renovationen.
+
+              </p>
+
+              <div
+                className="mt-8 text-sm font-semibold"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Mehr erfahren →
+              </div>
+
             </Link>
 
             {/* Heizung */}
+
             <Link
               href="/heizung"
-              className="group relative min-h-[430px] overflow-hidden bg-white"
+              className="group relative overflow-hidden bg-white p-8 transition hover:-translate-y-1 md:p-12"
             >
-              <img
-                src="/images/leistungen/heizung.jpg"
-                alt="Heizung"
-                className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
+
+              <div
+                className="absolute left-0 top-0 h-full w-1 transition-all group-hover:w-2"
+                style={{
+                  backgroundColor: MYSAN_BLUE,
+                }}
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+              <div className="flex items-start justify-between">
 
-              <div className="absolute bottom-0 left-0 right-0 p-8 text-white lg:p-10">
-                <div className="mb-3 text-sm font-semibold uppercase tracking-[3px] text-[#8eb6e8]">
-                  Leistung
-                </div>
+                <span
+                  className="text-sm font-semibold"
+                  style={{
+                    color: MYSAN_BLUE,
+                  }}
+                >
+                  02
+                </span>
 
-                <h3 className="text-4xl font-light">
-                  <span className="font-semibold">Heizung</span>
-                </h3>
+                <span
+                  className="text-3xl transition-transform duration-300 group-hover:translate-x-2"
+                  style={{
+                    color: MYSAN_BLUE,
+                  }}
+                >
+                  →
+                </span>
 
-                <p className="mt-3 max-w-[500px] leading-7 text-white/85">
-                  Moderne Heizlösungen, Sanierungen, Installationen, Service
-                  und Unterhalt.
-                </p>
-
-                <div className="mt-6 font-semibold">
-                  Mehr erfahren <span className="ml-2">→</span>
-                </div>
               </div>
+
+              <h3 className="mt-20 text-4xl font-light">
+                Heizung
+              </h3>
+
+              <p className="mt-5 max-w-md leading-7 text-neutral-600">
+
+                Moderne und effiziente
+                Heizlösungen für Ihr Zuhause
+                und Ihr Gebäude.
+
+              </p>
+
+              <div
+                className="mt-8 text-sm font-semibold"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Mehr erfahren →
+              </div>
+
             </Link>
+
           </div>
+
         </div>
+
       </section>
 
-      {/* =========================================================
+      {/* =====================================================
           REFERENZEN
-      ========================================================= */}
-      <section className="bg-white py-24 lg:py-32">
-        <div className="mx-auto max-w-[1300px] px-6 lg:px-12">
-          <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
-            <div>
-              <span className="text-sm font-semibold uppercase tracking-[3px] text-[#3C70B7]">
-                Unsere Arbeiten
-              </span>
+      ===================================================== */}
 
-              <h2 className="mt-4 text-4xl font-light tracking-[-1px] sm:text-5xl">
-                Referenzen
+      <section className="relative">
+
+        <div
+          className="absolute left-0 top-0 h-full w-2"
+          style={{
+            backgroundColor: MYSAN_BLUE,
+          }}
+        />
+
+        <div className="mx-auto max-w-7xl px-8 py-24 md:px-12 md:py-32 lg:px-16">
+
+          <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
+
+            <div>
+
+              <p
+                className="text-sm font-semibold uppercase tracking-[0.2em]"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Projekte
+              </p>
+
+              <h2 className="mt-5 text-4xl font-light tracking-tight md:text-6xl">
+                Unsere Referenzen
               </h2>
+
             </div>
 
             <Link
               href="/referenzen"
-              className="font-semibold text-[#3C70B7]"
+              className="text-sm font-semibold"
+              style={{
+                color: MYSAN_BLUE,
+              }}
             >
-              Alle Referenzen ansehen →
+              Alle Referenzen →
             </Link>
+
           </div>
 
-          <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {references.map((reference) => (
-              <Link
-                href="/referenzen"
-                key={reference.title}
-                className="group overflow-hidden border border-gray-100 bg-white"
-              >
-                <div className="aspect-[4/3] overflow-hidden bg-[#F4F7FA]">
-                  <img
-                    src={reference.image}
-                    alt={reference.title}
-                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                  />
-                </div>
+          {references.length > 0 ? (
 
-                <div className="p-7">
-                  <div className="text-sm font-semibold uppercase tracking-[2px] text-[#3C70B7]">
-                    Mysan Jeitziner
-                  </div>
+            <div className="mt-14 grid gap-8 md:grid-cols-3">
 
-                  <h3 className="mt-2 text-2xl font-semibold">
-                    {reference.title}
-                  </h3>
+              {references.map((reference) => {
 
-                  <p className="mt-3 leading-7 text-gray-600">
-                    {reference.text}
-                  </p>
+                const image =
+                  getReferenceImage(
+                    reference.id
+                  )
 
-                  <div className="mt-5 font-semibold text-[#3C70B7]">
-                    Projekt ansehen →
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                return (
+                  <Link
+                    key={reference.id}
+                    href={`/referenzen/${reference.slug}`}
+                    className="group"
+                  >
+
+                    <div className="relative aspect-[4/3] overflow-hidden bg-[#F4F7FA]">
+
+                      {image ? (
+
+                        <img
+                          src={image}
+                          alt={reference.title}
+                          className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                        />
+
+                      ) : (
+
+                        <div className="flex h-full items-center justify-center text-sm text-neutral-400">
+                          Kein Bild vorhanden
+                        </div>
+
+                      )}
+
+                    </div>
+
+                    <div className="border-b border-neutral-200 pb-6 pt-5">
+
+                      <h3 className="text-xl font-medium">
+                        {reference.title}
+                      </h3>
+
+                      {(reference.location ||
+                        reference.year) && (
+
+                        <p className="mt-2 text-sm text-neutral-500">
+
+                          {reference.location}
+
+                          {reference.location &&
+                            reference.year &&
+                            ' · '}
+
+                          {reference.year}
+
+                        </p>
+
+                      )}
+
+                      <div
+                        className="mt-4 text-sm font-semibold"
+                        style={{
+                          color: MYSAN_BLUE,
+                        }}
+                      >
+                        Referenz ansehen →
+                      </div>
+
+                    </div>
+
+                  </Link>
+                )
+              })}
+
+            </div>
+
+          ) : (
+
+            <div className="mt-14 border border-dashed border-neutral-300 p-12 text-center text-neutral-500">
+
+              Die ersten Referenzen werden
+              demnächst veröffentlicht.
+
+            </div>
+
+          )}
+
         </div>
+
       </section>
 
-      {/* =========================================================
+      {/* =====================================================
           NEWS
-      ========================================================= */}
-      <section className="bg-[#F4F7FA] py-24 lg:py-32">
-        <div className="mx-auto max-w-[1300px] px-6 lg:px-12">
-          <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
-            <div>
-              <span className="text-sm font-semibold uppercase tracking-[3px] text-[#3C70B7]">
-                Aktuelles
-              </span>
+      ===================================================== */}
 
-              <h2 className="mt-4 text-4xl font-light tracking-[-1px] sm:text-5xl">
-                News
+      {news.length > 0 && (
+
+        <section className="bg-[#F4F7FA]">
+
+          <div className="mx-auto max-w-7xl px-8 py-24 md:px-12 md:py-32 lg:px-16">
+
+            <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
+
+              <div>
+
+                <p
+                  className="text-sm font-semibold uppercase tracking-[0.2em]"
+                  style={{
+                    color: MYSAN_BLUE,
+                  }}
+                >
+                  Aktuelles
+                </p>
+
+                <h2 className="mt-5 text-4xl font-light tracking-tight md:text-6xl">
+                  News
+                </h2>
+
+              </div>
+
+              <Link
+                href="/news"
+                className="text-sm font-semibold"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Alle News →
+              </Link>
+
+            </div>
+
+            <div className="mt-14 grid gap-8 md:grid-cols-3">
+
+              {news.map((item) => (
+
+                <Link
+                  key={item.id}
+                  href={`/news/${item.slug}`}
+                  className="group bg-white"
+                >
+
+                  {item.image_url ? (
+
+                    <div className="aspect-[16/10] overflow-hidden">
+
+                      <img
+                        src={item.image_url}
+                        alt={item.title}
+                        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                      />
+
+                    </div>
+
+                  ) : (
+
+                    <div
+                      className="aspect-[16/10]"
+                      style={{
+                        backgroundColor: MYSAN_BLUE,
+                      }}
+                    />
+
+                  )}
+
+                  <div className="p-7">
+
+                    <p className="text-xs font-medium text-neutral-400">
+                      {formatDate(
+                        item.created_at
+                      )}
+                    </p>
+
+                    <h3 className="mt-3 text-xl font-medium">
+                      {item.title}
+                    </h3>
+
+                    {item.excerpt && (
+
+                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-neutral-600">
+                        {item.excerpt}
+                      </p>
+
+                    )}
+
+                    <div
+                      className="mt-6 text-sm font-semibold"
+                      style={{
+                        color: MYSAN_BLUE,
+                      }}
+                    >
+                      Weiterlesen →
+                    </div>
+
+                  </div>
+
+                </Link>
+
+              ))}
+
+            </div>
+
+          </div>
+
+        </section>
+
+      )}
+
+      {/* =====================================================
+          KONTAKT
+      ===================================================== */}
+
+      <section
+        className="relative overflow-hidden"
+        style={{
+          backgroundColor: MYSAN_BLUE,
+        }}
+      >
+
+        <div className="mx-auto max-w-7xl px-8 py-24 md:px-12 md:py-32 lg:px-16">
+
+          <div className="grid gap-12 md:grid-cols-[1fr_auto] md:items-end">
+
+            <div>
+
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/60">
+                Kontakt
+              </p>
+
+              <h2 className="mt-5 max-w-3xl text-4xl font-light leading-tight tracking-tight text-white md:text-6xl">
+
+                Sie haben Fragen
+                <br />
+                oder ein Projekt?
+
               </h2>
+
+              <p className="mt-6 max-w-xl text-lg leading-8 text-white/75">
+
+                Wir beraten Sie gerne persönlich
+                und finden gemeinsam die passende
+                Lösung.
+
+              </p>
+
             </div>
 
             <Link
-              href="/news"
-              className="font-semibold text-[#3C70B7]"
+              href="/kontakt"
+              className="inline-flex w-fit items-center rounded-full bg-white px-8 py-4 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-100"
             >
-              Alle News ansehen →
-            </Link>
-          </div>
-
-          <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {news.map((item) => (
-              <Link
-                href="/news"
-                key={item.title}
-                className="group bg-white p-8 transition hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="text-sm font-semibold text-[#3C70B7]">
-                  {item.date}
-                </div>
-
-                <h3 className="mt-5 text-2xl font-semibold leading-tight">
-                  {item.title}
-                </h3>
-
-                <p className="mt-4 leading-7 text-gray-600">
-                  {item.text}
-                </p>
-
-                <div className="mt-7 font-semibold text-[#3C70B7]">
-                  Weiterlesen →
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================
-          CTA
-      ========================================================= */}
-      <section className="relative overflow-hidden bg-[#3C70B7] py-24 text-white lg:py-28">
-        <div className="absolute right-0 top-0 h-full w-1/3 bg-white/5" />
-
-        <div className="relative mx-auto flex max-w-[1300px] flex-col justify-between gap-10 px-6 lg:flex-row lg:items-center lg:px-12">
-          <div>
-            <div className="text-sm font-semibold uppercase tracking-[3px] text-white/70">
-              Ihr Projekt
-            </div>
-
-            <h2 className="mt-4 max-w-[700px] text-4xl font-light leading-tight sm:text-5xl">
-              Sie haben ein Projekt?
-              <br />
-              <span className="font-semibold">
-                Wir haben die Lösung.
+              Kontakt aufnehmen
+              <span className="ml-4 text-lg">
+                →
               </span>
-            </h2>
+            </Link>
 
-            <p className="mt-5 max-w-[650px] text-lg leading-8 text-white/80">
-              Sprechen Sie mit uns. Wir beraten Sie gerne persönlich und
-              finden gemeinsam die passende Lösung.
-            </p>
           </div>
 
-          <Link
-            href="/kontakt"
-            className="inline-flex shrink-0 items-center justify-center rounded-full bg-white px-9 py-4 font-semibold text-[#3C70B7] transition hover:bg-gray-100"
-          >
-            Kontakt aufnehmen
-          </Link>
         </div>
+
       </section>
 
-      {/* =========================================================
+      {/* =====================================================
           FOOTER
-      ========================================================= */}
-      <footer className="bg-[#222222] text-white">
-        <div className="mx-auto grid max-w-[1300px] gap-12 px-6 py-16 lg:grid-cols-4 lg:px-12">
-          <div className="lg:col-span-2">
-            <div className="text-[30px] font-light text-white">
-              mySan
-            </div>
+      ===================================================== */}
 
-            <div className="mt-1 text-[12px] font-semibold uppercase tracking-[4px] text-white/60">
-              JEITZINER
-            </div>
+      <footer className="bg-neutral-950 text-white">
 
-            <p className="mt-6 max-w-[420px] leading-7 text-white/60">
-              Ihr zuverlässiger Partner für Sanitär und Heizung im Wallis.
-            </p>
-          </div>
+        <div className="mx-auto max-w-7xl px-8 py-14 md:px-12 lg:px-16">
 
-          <div>
-            <h3 className="font-semibold">Navigation</h3>
+          <div className="grid gap-12 md:grid-cols-3">
 
-            <div className="mt-5 flex flex-col gap-3 text-white/60">
-              <Link
-                href="/sanitaer"
-                className="transition hover:text-white"
-              >
-                Sanitär
-              </Link>
+            {/* Firma */}
 
-              <Link
-                href="/heizung"
-                className="transition hover:text-white"
-              >
-                Heizung
-              </Link>
-
-              <Link
-                href="/referenzen"
-                className="transition hover:text-white"
-              >
-                Referenzen
-              </Link>
-
-              <Link
-                href="/news"
-                className="transition hover:text-white"
-              >
-                News
-              </Link>
-
-              <Link
-                href="/kontakt"
-                className="transition hover:text-white"
-              >
-                Kontakt
-              </Link>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold">Kontakt</h3>
-
-            <div className="mt-5 space-y-3 text-white/60">
-              <p>Mysan Jeitziner</p>
-              <p>Sanitär & Heizung</p>
-              <p>Wallis, Schweiz</p>
-
-              <Link
-                href="/kontakt"
-                className="inline-block pt-2 text-[#6f9fd5] transition hover:text-white"
-              >
-                Kontakt aufnehmen →
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-white/10">
-          <div className="mx-auto flex max-w-[1300px] flex-col justify-between gap-4 px-6 py-6 text-sm text-white/40 md:flex-row lg:px-12">
             <div>
-              © {new Date().getFullYear()} Mysan Jeitziner. Alle Rechte
-              vorbehalten.
+
+              <div className="flex items-center gap-3">
+
+                <div
+                  className="flex h-11 w-11 items-center justify-center"
+                  style={{
+                    backgroundColor: MYSAN_BLUE,
+                  }}
+                >
+                  <span className="text-2xl text-white">
+                    y
+                  </span>
+                </div>
+
+                <div>
+
+                  <div className="text-xl font-medium">
+                    mySan
+                  </div>
+
+                  <div className="text-xs font-bold tracking-wide text-white/60">
+                    JEITZINER
+                  </div>
+
+                </div>
+
+              </div>
+
+              <p className="mt-6 max-w-xs text-sm leading-6 text-white/50">
+
+                Sanitär und Heizung
+                <br />
+                im Wallis.
+
+              </p>
+
             </div>
 
-            <div className="flex gap-6">
-              <Link
-                href="/impressum"
-                className="hover:text-white"
-              >
-                Impressum
-              </Link>
+            {/* Navigation */}
 
-              <Link
-                href="/datenschutz"
-                className="hover:text-white"
-              >
-                Datenschutz
-              </Link>
+            <div>
 
-              <Link
-                href="/cookies"
-                className="hover:text-white"
-              >
-                Cookies
-              </Link>
+              <h3 className="text-sm font-semibold">
+                Navigation
+              </h3>
+
+              <div className="mt-5 flex flex-col gap-3 text-sm text-white/50">
+
+                <Link
+                  href="/"
+                  className="hover:text-white"
+                >
+                  Startseite
+                </Link>
+
+                <Link
+                  href="/sanitaer"
+                  className="hover:text-white"
+                >
+                  Sanitär
+                </Link>
+
+                <Link
+                  href="/heizung"
+                  className="hover:text-white"
+                >
+                  Heizung
+                </Link>
+
+                <Link
+                  href="/referenzen"
+                  className="hover:text-white"
+                >
+                  Referenzen
+                </Link>
+
+                <Link
+                  href="/news"
+                  className="hover:text-white"
+                >
+                  News
+                </Link>
+
+                <Link
+                  href="/kontakt"
+                  className="hover:text-white"
+                >
+                  Kontakt
+                </Link>
+
+              </div>
+
             </div>
+
+            {/* Rechtliches */}
+
+            <div>
+
+              <h3 className="text-sm font-semibold">
+                Rechtliches
+              </h3>
+
+              <div className="mt-5 flex flex-col gap-3 text-sm text-white/50">
+
+                <Link
+                  href="/impressum"
+                  className="hover:text-white"
+                >
+                  Impressum
+                </Link>
+
+                <Link
+                  href="/datenschutz"
+                  className="hover:text-white"
+                >
+                  Datenschutz
+                </Link>
+
+                <Link
+                  href="/cookies"
+                  className="hover:text-white"
+                >
+                  Cookies
+                </Link>
+
+              </div>
+
+            </div>
+
           </div>
-        </div>
-      </footer>
-    </main>
-  );
-}
 
+          <div className="mt-14 flex flex-col justify-between gap-4 border-t border-white/10 pt-6 text-xs text-white/30 md:flex-row">
+
+            <p>
+              © {new Date().getFullYear()} Mysan Jeitziner
+            </p>
+
+            <p>
+              Sanitär · Heizung · Service
+            </p>
+
+          </div>
+
+        </div>
+
+      </footer>
+
+    </main>
+  )
+}
