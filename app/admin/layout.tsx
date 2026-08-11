@@ -1,4 +1,6 @@
+
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import AdminLogout from './AdminLogout'
 
@@ -9,14 +11,32 @@ export default async function AdminLayout({
 }) {
   const supabase = await createClient()
 
+  /*
+   * =========================================================
+   * BENUTZER PRÜFEN
+   * =========================================================
+   */
+
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser()
+
+  /*
+   * Kein eingeloggter Benutzer
+   * → sofort zum Login
+   */
+
+  if (error || !user) {
+    redirect('/login')
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
 
-      {/* DESKTOP SIDEBAR */}
+      {/* =====================================================
+          DESKTOP SIDEBAR
+      ===================================================== */}
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r bg-white lg:flex lg:flex-col">
 
@@ -37,7 +57,9 @@ export default async function AdminLayout({
 
         </div>
 
-        {/* NAVIGATION */}
+        {/* =================================================
+            NAVIGATION
+        ================================================= */}
 
         <nav className="flex-1 p-4">
 
@@ -47,9 +69,24 @@ export default async function AdminLayout({
 
           <div className="space-y-1">
 
+            {/* Dashboard */}
+
             <Link
               href="/admin"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 hover:text-black"
+              className="
+                flex
+                items-center
+                gap-3
+                rounded-xl
+                px-4
+                py-3
+                text-sm
+                font-medium
+                text-gray-700
+                transition
+                hover:bg-gray-100
+                hover:text-black
+              "
             >
               <span className="flex h-6 w-6 items-center justify-center">
                 ▦
@@ -58,9 +95,24 @@ export default async function AdminLayout({
               Dashboard
             </Link>
 
+            {/* Referenzen */}
+
             <Link
               href="/admin/referenzen"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 hover:text-black"
+              className="
+                flex
+                items-center
+                gap-3
+                rounded-xl
+                px-4
+                py-3
+                text-sm
+                font-medium
+                text-gray-700
+                transition
+                hover:bg-gray-100
+                hover:text-black
+              "
             >
               <span className="flex h-6 w-6 items-center justify-center">
                 ▧
@@ -69,9 +121,24 @@ export default async function AdminLayout({
               Referenzen
             </Link>
 
+            {/* Kategorien */}
+
             <Link
               href="/admin/kategorien"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 hover:text-black"
+              className="
+                flex
+                items-center
+                gap-3
+                rounded-xl
+                px-4
+                py-3
+                text-sm
+                font-medium
+                text-gray-700
+                transition
+                hover:bg-gray-100
+                hover:text-black
+              "
             >
               <span className="flex h-6 w-6 items-center justify-center">
                 ☷
@@ -80,9 +147,24 @@ export default async function AdminLayout({
               Kategorien
             </Link>
 
+            {/* News */}
+
             <Link
               href="/admin/news"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 hover:text-black"
+              className="
+                flex
+                items-center
+                gap-3
+                rounded-xl
+                px-4
+                py-3
+                text-sm
+                font-medium
+                text-gray-700
+                transition
+                hover:bg-gray-100
+                hover:text-black
+              "
             >
               <span className="flex h-6 w-6 items-center justify-center">
                 ◫
@@ -95,14 +177,32 @@ export default async function AdminLayout({
 
         </nav>
 
-        {/* FOOTER SIDEBAR */}
+        {/* =================================================
+            FOOTER SIDEBAR
+        ================================================= */}
 
         <div className="border-t p-4">
+
+          {/* Website */}
 
           <Link
             href="/"
             target="_blank"
-            className="mb-2 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-black"
+            className="
+              mb-2
+              flex
+              items-center
+              gap-3
+              rounded-xl
+              px-4
+              py-3
+              text-sm
+              font-medium
+              text-gray-600
+              transition
+              hover:bg-gray-100
+              hover:text-black
+            "
           >
             <span className="flex h-6 w-6 items-center justify-center">
               ↗
@@ -111,11 +211,13 @@ export default async function AdminLayout({
             Website öffnen
           </Link>
 
-          {user && (
-            <div className="mb-2 truncate px-4 text-xs text-gray-400">
-              {user.email}
-            </div>
-          )}
+          {/* Benutzer */}
+
+          <div className="mb-2 truncate px-4 text-xs text-gray-400">
+            {user.email}
+          </div>
+
+          {/* Logout */}
 
           <AdminLogout />
 
@@ -123,21 +225,27 @@ export default async function AdminLayout({
 
       </aside>
 
-      {/* MOBILE HEADER */}
+      {/* =====================================================
+          MOBILE HEADER
+      ===================================================== */}
 
       <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-white px-5 lg:hidden">
 
         <Link href="/admin">
+
           <img
             src="/logo-mysan.svg"
             alt="Mysan Jeitziner"
             className="h-10 w-auto max-w-[160px]"
           />
+
         </Link>
 
       </div>
 
-      {/* HAUPTINHALT */}
+      {/* =====================================================
+          HAUPTINHALT
+      ===================================================== */}
 
       <main className="min-h-screen lg:pl-64">
         {children}
@@ -146,3 +254,4 @@ export default async function AdminLayout({
     </div>
   )
 }
+
