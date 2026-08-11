@@ -48,10 +48,7 @@ export default function SiteHeader() {
       return pathname === '/'
     }
 
-    return (
-      pathname === href ||
-      pathname.startsWith(`${href}/`)
-    )
+    return pathname === href || pathname.startsWith(`${href}/`)
   }
 
   return (
@@ -104,11 +101,7 @@ export default function SiteHeader() {
                     key={item.href}
                     href={item.href}
                     className={`
-                      group
-                      relative
-                      flex
-                      h-12
-                      items-center
+                      group relative flex h-12 items-center
                       gap-3
                       px-4
                       text-sm
@@ -122,10 +115,9 @@ export default function SiteHeader() {
                       }
                     `}
                   >
-
-                    {/* =========================================
+                    {/* =================================================
                         LINKER STRICH
-                    ========================================= */}
+                    ================================================= */}
 
                     <span
                       className={`
@@ -140,14 +132,14 @@ export default function SiteHeader() {
                         ${
                           active
                             ? 'bg-[#1dabff]'
-                            : 'bg-neutral-300 group-hover:bg-[#1dabff]'
+                            : 'bg-transparent group-hover:bg-[#1dabff]'
                         }
                       `}
                     />
 
-                    {/* =========================================
+                    {/* =================================================
                         WASSERTROPFEN
-                    ========================================= */}
+                    ================================================= */}
 
                     <span
                       className={`
@@ -177,7 +169,6 @@ export default function SiteHeader() {
                     </span>
 
                     {item.label}
-
                   </Link>
                 )
               })}
@@ -195,9 +186,7 @@ export default function SiteHeader() {
                   : 'Menü öffnen'
               }
               aria-expanded={menuOpen}
-              onClick={() =>
-                setMenuOpen(!menuOpen)
-              }
+              onClick={() => setMenuOpen(!menuOpen)}
               className="
                 relative
                 flex
@@ -319,7 +308,6 @@ export default function SiteHeader() {
           ================================================= */}
 
           <nav className="flex flex-col">
-
             {navItems.map((item) => {
               const active = isActive(item.href)
 
@@ -327,9 +315,7 @@ export default function SiteHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() =>
-                    setMenuOpen(false)
-                  }
+                  onClick={() => setMenuOpen(false)}
                   className={`
                     group
                     relative
@@ -351,9 +337,7 @@ export default function SiteHeader() {
                   `}
                 >
 
-                  {/* =========================================
-                      LINKER STRICH
-                  ========================================= */}
+                  {/* LINKER STRICH */}
 
                   <span
                     className={`
@@ -368,14 +352,12 @@ export default function SiteHeader() {
                       ${
                         active
                           ? 'bg-[#1dabff]'
-                          : 'bg-neutral-300 group-hover:bg-[#1dabff]'
+                          : 'bg-transparent group-hover:bg-[#1dabff]'
                       }
                     `}
                   />
 
-                  {/* =========================================
-                      WASSERTROPFEN
-                  ========================================= */}
+                  {/* WASSERTROPFEN */}
 
                   <span
                     className={`
@@ -406,15 +388,13 @@ export default function SiteHeader() {
                   </span>
 
                   {item.label}
-
                 </Link>
               )
             })}
-
           </nav>
 
           {/* =================================================
-              MOBILE FOOTER
+              FOOTER IM MOBILE MENÜ
           ================================================= */}
 
           <div className="mt-auto pt-8">
@@ -423,30 +403,45 @@ export default function SiteHeader() {
 
               <Link
                 href="/impressum"
-                onClick={() =>
-                  setMenuOpen(false)
-                }
-                className="transition-colors hover:text-[#1dabff]"
+                onClick={() => setMenuOpen(false)}
+                className={`
+                  transition-colors
+                  ${
+                    pathname === '/impressum'
+                      ? 'text-[#1dabff]'
+                      : 'hover:text-[#1dabff]'
+                  }
+                `}
               >
                 Impressum
               </Link>
 
               <Link
                 href="/datenschutz"
-                onClick={() =>
-                  setMenuOpen(false)
-                }
-                className="transition-colors hover:text-[#1dabff]"
+                onClick={() => setMenuOpen(false)}
+                className={`
+                  transition-colors
+                  ${
+                    pathname === '/datenschutz'
+                      ? 'text-[#1dabff]'
+                      : 'hover:text-[#1dabff]'
+                  }
+                `}
               >
                 Datenschutz
               </Link>
 
               <Link
                 href="/cookies"
-                onClick={() =>
-                  setMenuOpen(false)
-                }
-                className="transition-colors hover:text-[#1dabff]"
+                onClick={() => setMenuOpen(false)}
+                className={`
+                  transition-colors
+                  ${
+                    pathname === '/cookies'
+                      ? 'text-[#1dabff]'
+                      : 'hover:text-[#1dabff]'
+                  }
+                `}
               >
                 Cookies
               </Link>
@@ -454,7 +449,6 @@ export default function SiteHeader() {
             </div>
 
           </div>
-
         </div>
       </div>
     </>

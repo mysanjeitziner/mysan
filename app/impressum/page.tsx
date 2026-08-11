@@ -1,122 +1,350 @@
-import PageHero from '@/components/page-hero'
+
+const MYSAN_BLUE = '#1dabff'
 
 export default function ImpressumPage() {
-return ( <main> <PageHero
-     eyebrow="Rechtliches"
-     title="Impressum"
-     description="Angaben zum Unternehmen und zur verantwortlichen Stelle."
-   />
+  return (
+    <main className="min-h-screen bg-white text-neutral-900">
 
-  <section className="relative overflow-hidden">
-    <div className="absolute left-0 top-0 h-full w-2 bg-[#1dabff]" />
+      {/* =====================================================
+          HERO
+      ===================================================== */}
 
-    <div className="mx-auto max-w-4xl px-8 py-20 md:px-12 md:py-28 lg:px-16">
-      <div className="space-y-12">
+      <section className="relative overflow-hidden bg-white">
 
-        <div>
-          <h2 className="text-2xl font-light tracking-tight md:text-3xl">
-            Mysan Jeitziner
-          </h2>
+        {/* Blauer linker Rand */}
 
-          <div className="mt-5 space-y-1 leading-7 text-neutral-600">
-            <p>Sanitär und Heizung</p>
-            <p>Wallis, Schweiz</p>
+        <div
+          className="absolute left-0 top-0 z-30 h-full w-2"
+          style={{
+            backgroundColor: MYSAN_BLUE,
+          }}
+        />
+
+        <div className="mx-auto max-w-7xl px-8 pb-12 pt-28 md:px-12 md:pb-16 md:pt-32 lg:px-16">
+
+          <div className="max-w-4xl">
+
+            {/* Blauer Strich */}
+
+            <div
+              className="mb-5 h-1 w-14"
+              style={{
+                backgroundColor: MYSAN_BLUE,
+              }}
+            />
+
+            {/* Eyebrow */}
+
+            <p
+              className="text-xs font-semibold uppercase tracking-[0.25em]"
+              style={{
+                color: MYSAN_BLUE,
+              }}
+            >
+              Rechtliche Angaben
+            </p>
+
+            {/* Titel */}
+
+            <h1 className="mt-4 text-5xl font-light leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
+
+              Impressum
+
+              <br />
+
+              <span
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Rechtliche Angaben.
+              </span>
+
+            </h1>
+
           </div>
+
         </div>
 
-        <div>
-          <h2 className="text-2xl font-light tracking-tight md:text-3xl">
-            Kontakt
-          </h2>
+      </section>
 
-          <div className="mt-5 space-y-1 leading-7 text-neutral-600">
-            <p>
-              Telefon:{' '}
-              <a
-                href="tel:+41000000000"
-                className="transition-colors hover:text-[#1dabff]"
-              >
-                +41 XX XXX XX XX
-              </a>
-            </p>
 
-            <p>
-              E-Mail:{' '}
-              <a
-                href="mailto:info@mysan.ch"
-                className="transition-colors hover:text-[#1dabff]"
-              >
-                info@mysan.ch
-              </a>
-            </p>
+      {/* =====================================================
+          INHALT
+      ===================================================== */}
 
-            <p>
-              Website:{' '}
-              <a
-                href="https://www.mysan.ch"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition-colors hover:text-[#1dabff]"
+      <section className="relative overflow-hidden bg-white">
+
+        {/* Blauer linker Rand */}
+
+        <div
+          className="absolute left-0 top-0 h-full w-2"
+          style={{
+            backgroundColor: MYSAN_BLUE,
+          }}
+        />
+
+        <div className="mx-auto max-w-7xl px-8 pb-20 md:px-12 md:pb-24 lg:px-16">
+
+          <div className="max-w-4xl">
+
+            {/* =================================================
+                ANGABEN ZUM UNTERNEHMEN
+            ================================================= */}
+
+            <section className="border-t border-neutral-200 pt-10">
+
+              <p
+                className="text-xs font-semibold uppercase tracking-[0.2em]"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
               >
-                www.mysan.ch
+                Angaben
+              </p>
+
+              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
+                zum Unternehmen.
+              </h2>
+
+              <div className="mt-7 space-y-1 text-base leading-7 text-neutral-700">
+                <p className="font-medium text-neutral-900">
+                  mySan Jeitziner GmbH
+                </p>
+
+                <p>Krydenweg 86</p>
+                <p>3900 Gamsen</p>
+                <p>Schweiz</p>
+              </div>
+
+            </section>
+
+
+            {/* =================================================
+                KONTAKT
+            ================================================= */}
+
+            <section className="mt-14 border-t border-neutral-200 pt-10">
+
+              <p
+                className="text-xs font-semibold uppercase tracking-[0.2em]"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Kontakt
+              </p>
+
+              <div className="mt-6 space-y-2 text-base leading-7 text-neutral-700">
+
+                <p>
+                  <span className="font-medium text-neutral-900">
+                    Telefon:
+                  </span>{' '}
+                  079 590 09 60
+                </p>
+
+                <p>
+                  <span className="font-medium text-neutral-900">
+                    Büro:
+                  </span>{' '}
+                  079 217 25 71
+                </p>
+
+                <p>
+                  <span className="font-medium text-neutral-900">
+                    E-Mail:
+                  </span>{' '}
+                  <a
+                    href="mailto:info@mysan.ch"
+                    className="transition-colors hover:text-[#1dabff]"
+                  >
+                    info@mysan.ch
+                  </a>
+                </p>
+
+              </div>
+
+            </section>
+
+
+            {/* =================================================
+                VERANTWORTLICH
+            ================================================= */}
+
+            <section className="mt-14 border-t border-neutral-200 pt-10">
+
+              <p
+                className="text-xs font-semibold uppercase tracking-[0.2em]"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Verantwortlich
+              </p>
+
+              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
+                für den Inhalt.
+              </h2>
+
+              <div className="mt-7 space-y-1 text-base leading-7 text-neutral-700">
+
+                <p className="font-medium text-neutral-900">
+                  mySan Jeitziner GmbH
+                </p>
+
+                <p>Krydenweg 86</p>
+                <p>3900 Gamsen</p>
+                <p>Schweiz</p>
+
+              </div>
+
+            </section>
+
+
+            {/* =================================================
+                HAFTUNG FÜR INHALTE
+            ================================================= */}
+
+            <section className="mt-14 border-t border-neutral-200 pt-10">
+
+              <p
+                className="text-xs font-semibold uppercase tracking-[0.2em]"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Haftung
+              </p>
+
+              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
+                für Inhalte.
+              </h2>
+
+              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
+
+                <p>
+                  Die Inhalte dieser Website wurden mit grösstmöglicher
+                  Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit
+                  und Aktualität der Inhalte kann jedoch keine Gewähr
+                  übernommen werden.
+                </p>
+
+                <p>
+                  Als Dienstanbieter sind wir für eigene Inhalte auf diesen
+                  Seiten nach den allgemeinen gesetzlichen Vorschriften
+                  verantwortlich. Wir sind jedoch nicht verpflichtet,
+                  übermittelte oder gespeicherte fremde Informationen zu
+                  überwachen oder nach Umständen zu forschen, die auf eine
+                  rechtswidrige Tätigkeit hinweisen.
+                </p>
+
+              </div>
+
+            </section>
+
+
+            {/* =================================================
+                HAFTUNG FÜR LINKS
+            ================================================= */}
+
+            <section className="mt-14 border-t border-neutral-200 pt-10">
+
+              <p
+                className="text-xs font-semibold uppercase tracking-[0.2em]"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Externe Links
+              </p>
+
+              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
+                Haftung für Links.
+              </h2>
+
+              <div className="mt-7 text-base leading-7 text-neutral-700">
+
+                <p>
+                  Diese Website kann Links zu externen Websites Dritter
+                  enthalten. Auf deren Inhalte haben wir keinen Einfluss.
+                  Für die Inhalte der verlinkten Seiten ist stets der
+                  jeweilige Anbieter oder Betreiber verantwortlich.
+                </p>
+
+              </div>
+
+            </section>
+
+
+            {/* =================================================
+                URHEBERRECHT
+            ================================================= */}
+
+            <section className="mt-14 border-t border-neutral-200 pt-10">
+
+              <p
+                className="text-xs font-semibold uppercase tracking-[0.2em]"
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Copyright
+              </p>
+
+              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
+                Urheberrecht.
+              </h2>
+
+              <div className="mt-7 text-base leading-7 text-neutral-700">
+
+                <p>
+                  Die durch die Seitenbetreiber erstellten Inhalte und Werke
+                  auf dieser Website unterliegen dem Schweizer Urheberrecht.
+                  Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art
+                  der Verwertung ausserhalb der Grenzen des Urheberrechts
+                  bedürfen der vorherigen schriftlichen Zustimmung des
+                  jeweiligen Rechteinhabers.
+                </p>
+
+              </div>
+
+            </section>
+
+
+            {/* =================================================
+                ZURÜCK
+            ================================================= */}
+
+            <div className="mt-16 border-t border-neutral-200 pt-8">
+
+              <a
+                href="/"
+                className="
+                  inline-flex
+                  items-center
+                  text-sm
+                  font-medium
+                  text-neutral-500
+                  transition-colors
+                  hover:text-[#1dabff]
+                "
+              >
+                <span className="mr-3 text-lg">
+                  ←
+                </span>
+
+                Zurück zur Startseite
               </a>
-            </p>
+
+            </div>
+
           </div>
+
         </div>
 
-        <div>
-          <h2 className="text-2xl font-light tracking-tight md:text-3xl">
-            Verantwortlich für den Inhalt
-          </h2>
+      </section>
 
-          <p className="mt-5 leading-7 text-neutral-600">
-            Mysan Jeitziner
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-light tracking-tight md:text-3xl">
-            Haftung für Inhalte
-          </h2>
-
-          <p className="mt-5 leading-7 text-neutral-600">
-            Die Inhalte dieser Website wurden mit grösstmöglicher Sorgfalt
-            erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität
-            der Inhalte können wir jedoch keine Gewähr übernehmen.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-light tracking-tight md:text-3xl">
-            Haftung für Links
-          </h2>
-
-          <p className="mt-5 leading-7 text-neutral-600">
-            Unsere Website kann Links zu externen Websites Dritter
-            enthalten. Auf deren Inhalte haben wir keinen Einfluss.
-            Für die Inhalte der verlinkten Seiten ist stets der jeweilige
-            Anbieter oder Betreiber verantwortlich.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-light tracking-tight md:text-3xl">
-            Urheberrecht
-          </h2>
-
-          <p className="mt-5 leading-7 text-neutral-600">
-            Die auf dieser Website veröffentlichten Inhalte und Werke
-            unterliegen dem schweizerischen Urheberrecht. Jede über den
-            gesetzlich zulässigen Rahmen hinausgehende Verwendung bedarf
-            der vorherigen Zustimmung des jeweiligen Rechteinhabers.
-          </p>
-        </div>
-
-      </div>
-    </div>
-  </section>
-</main>
-
-
-)
+    </main>
+  )
 }
