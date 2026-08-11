@@ -5,34 +5,42 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
+const MYSAN_BLUE = '#1dabff'
+
 const navigation = [
   {
-    label: 'Sanitär',
-    href: '/sanitaer',
-  },
-  {
-    label: 'Heizung',
-    href: '/heizung',
+    label: 'Dienstleistungen',
+    href: '/dienstleistungen',
   },
   {
     label: 'Referenzen',
     href: '/referenzen',
   },
   {
-    label: 'News',
-    href: '/news',
+    label: 'Team',
+    href: '/team',
+  },
+  {
+    label: 'Kontakt',
+    href: '/kontakt',
   },
 ]
-
-const MYSAN_BLUE = '#1dabff'
-const MYSAN_GREY = '#9ca3af'
 
 export default function SiteHeader() {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
 
+  /*
+   * =========================================================
+   * AKTIVER MENÜPUNKT
+   * =========================================================
+   */
+
   function isActive(href: string) {
-    return pathname === href || pathname.startsWith(`${href}/`)
+    return (
+      pathname === href ||
+      pathname.startsWith(`${href}/`)
+    )
   }
 
   return (
@@ -81,7 +89,6 @@ export default function SiteHeader() {
             <nav className="hidden items-center gap-2 lg:flex">
 
               {navigation.map((item) => {
-
                 const active = isActive(item.href)
 
                 return (
@@ -89,11 +96,7 @@ export default function SiteHeader() {
                     key={item.href}
                     href={item.href}
                     className={`
-                      group
-                      relative
-                      flex
-                      h-12
-                      items-center
+                      group relative flex h-12 items-center
                       gap-3
                       px-4
                       text-sm
@@ -108,9 +111,7 @@ export default function SiteHeader() {
                     `}
                   >
 
-                    {/* =========================================
-                        LINKER STRICH
-                    ========================================= */}
+                    {/* LINKER STRICH */}
 
                     <span
                       className={`
@@ -130,9 +131,7 @@ export default function SiteHeader() {
                       `}
                     />
 
-                    {/* =========================================
-                        WASSERTROPFEN
-                    ========================================= */}
+                    {/* WASSERTROPFEN */}
 
                     <span
                       className={`
@@ -146,13 +145,12 @@ export default function SiteHeader() {
                         duration-200
                         ${
                           active
-                            ? 'scale-110 text-[#1dabff]'
-                            : 'text-neutral-300 group-hover:scale-110 group-hover:text-[#1dabff]'
+                            ? 'text-[#1dabff]'
+                            : 'text-neutral-300 group-hover:text-[#1dabff]'
                         }
                       `}
                       aria-hidden="true"
                     >
-
                       <svg
                         viewBox="0 0 24 24"
                         fill="currentColor"
@@ -160,7 +158,6 @@ export default function SiteHeader() {
                       >
                         <path d="M12 2.5C12 2.5 5.5 10.1 5.5 15.2C5.5 19.3 8.4 22 12 22s6.5-2.7 6.5-6.8C18.5 10.1 12 2.5 12 2.5Z" />
                       </svg>
-
                     </span>
 
                     {item.label}
@@ -168,74 +165,6 @@ export default function SiteHeader() {
                   </Link>
                 )
               })}
-
-              {/* =================================================
-                  KONTAKT DESKTOP
-              ================================================= */}
-
-              <Link
-                href="/kontakt"
-                className={`
-                  group
-                  relative
-                  ml-3
-                  inline-flex
-                  h-12
-                  items-center
-                  justify-center
-                  gap-3
-                  rounded-full
-                  px-7
-                  text-sm
-                  font-semibold
-                  transition-all
-                  duration-200
-                  hover:-translate-y-0.5
-                  ${
-                    pathname === '/kontakt'
-                      ? 'border border-[#1dabff] bg-white text-[#1dabff]'
-                      : 'text-white'
-                  }
-                `}
-                style={{
-                  backgroundColor:
-                    pathname === '/kontakt'
-                      ? 'white'
-                      : MYSAN_BLUE,
-                }}
-              >
-
-                {/* Kontakt Tropfen */}
-
-                <span
-                  className={`
-                    flex
-                    h-4
-                    w-4
-                    items-center
-                    justify-center
-                    ${
-                      pathname === '/kontakt'
-                        ? 'text-[#1dabff]'
-                        : 'text-white'
-                    }
-                  `}
-                  aria-hidden="true"
-                >
-
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path d="M12 2.5C12 2.5 5.5 10.1 5.5 15.2C5.5 19.3 8.4 22 12 22s6.5-2.7 6.5-6.8C18.5 10.1 12 2.5 12 2.5Z" />
-                  </svg>
-
-                </span>
-
-                Kontakt
-
-              </Link>
 
             </nav>
 
@@ -364,9 +293,7 @@ export default function SiteHeader() {
         `}
       >
 
-        {/* =================================================
-            LINKER SEITENSTREIFEN
-        ================================================= */}
+        {/* LINKER SEITENSTREIFEN */}
 
         <div
           className="absolute left-0 top-0 h-full w-2"
@@ -375,16 +302,7 @@ export default function SiteHeader() {
           }}
         />
 
-        <div
-          className="
-            flex
-            min-h-full
-            flex-col
-            px-8
-            pb-8
-            pt-32
-          "
-        >
+        <div className="flex min-h-full flex-col px-8 pb-8 pt-32">
 
           {/* =================================================
               MOBILE NAVIGATION
@@ -393,7 +311,6 @@ export default function SiteHeader() {
           <nav className="flex flex-col">
 
             {navigation.map((item) => {
-
               const active = isActive(item.href)
 
               return (
@@ -411,7 +328,7 @@ export default function SiteHeader() {
                     border-b
                     border-neutral-200
                     py-5
-                    pl-6
+                    pl-8
                     text-2xl
                     font-light
                     transition-all
@@ -424,16 +341,14 @@ export default function SiteHeader() {
                   `}
                 >
 
-                  {/* =========================================
-                      LINKER STRICH
-                  ========================================= */}
+                  {/* LINKER STRICH */}
 
                   <span
                     className={`
                       absolute
                       left-0
                       top-1/2
-                      h-7
+                      h-8
                       w-0.5
                       -translate-y-1/2
                       transition-all
@@ -446,9 +361,7 @@ export default function SiteHeader() {
                     `}
                   />
 
-                  {/* =========================================
-                      WASSERTROPFEN
-                  ========================================= */}
+                  {/* WASSERTROPFEN */}
 
                   <span
                     className={`
@@ -460,11 +373,11 @@ export default function SiteHeader() {
                       items-center
                       justify-center
                       transition-all
-                      duration-300
+                      duration-200
                       ${
                         active
                           ? 'scale-110 text-[#1dabff]'
-                          : 'text-neutral-300 group-hover:scale-110 group-hover:text-[#1dabff]'
+                          : 'text-neutral-300 group-hover:text-[#1dabff]'
                       }
                     `}
                     aria-hidden="true"
@@ -486,102 +399,15 @@ export default function SiteHeader() {
               )
             })}
 
-            {/* =================================================
-                MOBILE KONTAKT
-            ================================================= */}
-
-            <Link
-              href="/kontakt"
-              onClick={() =>
-                setMenuOpen(false)
-              }
-              className={`
-                group
-                relative
-                mt-8
-                flex
-                h-14
-                items-center
-                justify-between
-                rounded-full
-                px-7
-                text-base
-                font-semibold
-                transition-all
-                duration-200
-                hover:-translate-y-0.5
-                ${
-                  pathname === '/kontakt'
-                    ? 'border border-[#1dabff] bg-white text-[#1dabff]'
-                    : 'text-white'
-                }
-              `}
-              style={{
-                backgroundColor:
-                  pathname === '/kontakt'
-                    ? 'white'
-                    : MYSAN_BLUE,
-              }}
-            >
-
-              <span className="flex items-center gap-3">
-
-                {/* Kontakt Tropfen */}
-
-                <span
-                  className={`
-                    flex
-                    h-4
-                    w-4
-                    items-center
-                    justify-center
-                    ${
-                      pathname === '/kontakt'
-                        ? 'text-[#1dabff]'
-                        : 'text-white'
-                    }
-                  `}
-                  aria-hidden="true"
-                >
-
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path d="M12 2.5C12 2.5 5.5 10.1 5.5 15.2C5.5 19.3 8.4 22 12 22s6.5-2.7 6.5-6.8C18.5 10.1 12 2.5 12 2.5Z" />
-                  </svg>
-
-                </span>
-
-                Kontakt aufnehmen
-
-              </span>
-
-              <span className="text-xl">
-                →
-              </span>
-
-            </Link>
-
           </nav>
 
           {/* =================================================
-              MOBILE RECHTLICHES
+              DEZENTER FOOTER IM MOBILE MENÜ
           ================================================= */}
 
           <div className="mt-auto pt-8">
 
-            <div
-              className="
-                flex
-                flex-wrap
-                gap-x-5
-                gap-y-2
-                text-xs
-                text-neutral-400
-              "
-            >
+            <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-neutral-400">
 
               <Link
                 href="/impressum"

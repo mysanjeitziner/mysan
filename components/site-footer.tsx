@@ -1,17 +1,18 @@
-```tsx
+
 import Link from 'next/link'
 
 const MYSAN_BLUE = '#1dabff'
+const INSTAGRAM_PINK = '#E1306C'
 
 export default function SiteFooter() {
   return (
     <footer className="bg-white">
 
-      <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
+      {/* =====================================================
+          FOOTER LINIE
+      ===================================================== */}
 
-        {/* =====================================================
-            FOOTER LINIE
-        ===================================================== */}
+      <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
 
         <div className="border-t border-neutral-200">
 
@@ -101,10 +102,14 @@ export default function SiteFooter() {
                   inline-flex
                   items-center
                   gap-2
-                  transition-colors
+                  font-bold
+                  transition-all
                   duration-200
-                  hover:text-[#1dabff]
+                  hover:opacity-80
                 "
+                style={{
+                  color: INSTAGRAM_PINK,
+                }}
               >
 
                 {/* Instagram Icon */}
@@ -159,4 +164,4 @@ export default function SiteFooter() {
     </footer>
   )
 }
-```
+
