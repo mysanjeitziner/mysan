@@ -1,81 +1,142 @@
-import PageHero from '@/components/page-hero'
+import Link from 'next/link'
+
+const MYSAN_BLUE = '#1dabff'
 
 export default function DatenschutzPage() {
-return ( <main> <PageHero
-     eyebrow="Rechtliches"
-     title="Datenschutz"
-     description="Informationen zum Umgang mit Ihren personenbezogenen Daten."
-   />
+  return (
+    <main className="bg-white text-neutral-900">
 
+      <section className="relative overflow-hidden">
 
-  <section className="relative overflow-hidden">
-    <div className="absolute left-0 top-0 h-full w-2 bg-[#1dabff]" />
+        <div
+          className="absolute left-0 top-0 h-full w-2"
+          style={{ backgroundColor: MYSAN_BLUE }}
+        />
 
-    <div className="mx-auto max-w-4xl px-8 py-20 md:px-12 md:py-28 lg:px-16">
-      <div className="prose prose-neutral max-w-none">
-        <h2>1. Allgemeine Hinweise</h2>
+        <div className="mx-auto max-w-5xl px-8 py-20 md:px-12 md:py-28">
 
-        <p>
-          Der Schutz Ihrer persönlichen Daten ist uns wichtig. Diese
-          Datenschutzerklärung informiert Sie darüber, welche
-          personenbezogenen Daten beim Besuch unserer Website erhoben,
-          verarbeitet und verwendet werden.
-        </p>
+          <div
+            className="mb-5 h-1 w-14"
+            style={{ backgroundColor: MYSAN_BLUE }}
+          />
 
-        <h2>2. Verantwortliche Stelle</h2>
+          <p
+            className="text-xs font-semibold uppercase tracking-[0.25em]"
+            style={{ color: MYSAN_BLUE }}
+          >
+            mySan Jeitziner
+          </p>
 
-        <p>
-          Mysan Jeitziner<br />
-          Sanitär und Heizung<br />
-          Wallis, Schweiz
-        </p>
+          <h1 className="mt-4 text-5xl font-light tracking-tight md:text-6xl">
+            Datenschutzerklärung
+          </h1>
 
-        <h2>3. Erhebung und Verarbeitung personenbezogener Daten</h2>
+          <div className="mt-12 max-w-3xl space-y-8 text-base leading-7 text-neutral-600">
 
-        <p>
-          Beim Besuch unserer Website können technische Daten wie
-          IP-Adresse, Datum und Uhrzeit des Zugriffs, verwendeter Browser
-          sowie aufgerufene Seiten verarbeitet werden. Diese Daten dienen
-          insbesondere der technischen Bereitstellung und Sicherheit
-          unserer Website.
-        </p>
+            <section>
+              <h2 className="text-2xl font-light text-neutral-900">
+                1. Verantwortliche Stelle
+              </h2>
 
-        <h2>4. Kontaktaufnahme</h2>
+              <p className="mt-3">
+                mySan Jeitziner GmbH
+                <br />
+                Krydenweg 86
+                <br />
+                3900 Gamsen
+                <br />
+                Schweiz
+              </p>
 
-        <p>
-          Wenn Sie uns über das Kontaktformular, per E-Mail oder auf
-          anderem Weg kontaktieren, verarbeiten wir die von Ihnen
-          übermittelten Angaben zur Bearbeitung Ihrer Anfrage.
-        </p>
+              <p className="mt-3">
+                E-Mail:{' '}
+                <a
+                  href="mailto:info@mysan.ch"
+                  style={{ color: MYSAN_BLUE }}
+                >
+                  info@mysan.ch
+                </a>
+              </p>
+            </section>
 
-        <h2>5. Cookies</h2>
+            <section>
+              <h2 className="text-2xl font-light text-neutral-900">
+                2. Kontaktformular
+              </h2>
 
-        <p>
-          Unsere Website kann Cookies und ähnliche Technologien verwenden.
-          Weitere Informationen finden Sie auf unserer Seite
-          <a href="/cookies"> Cookies</a>.
-        </p>
+              <p className="mt-3">
+                Wenn Sie unser Kontaktformular verwenden, werden die von Ihnen
+                eingegebenen Angaben zur Bearbeitung Ihrer Anfrage verwendet.
+                Dazu gehören insbesondere Name, Vorname, PLZ, Ort,
+                E-Mail-Adresse und der Inhalt Ihrer Nachricht.
+              </p>
 
-        <h2>6. Ihre Rechte</h2>
+              <p className="mt-3">
+                Die Daten werden nur so lange aufbewahrt, wie dies für die
+                Bearbeitung der Anfrage und die damit verbundenen gesetzlichen
+                Pflichten erforderlich ist.
+              </p>
+            </section>
 
-        <p>
-          Im Rahmen der geltenden gesetzlichen Bestimmungen haben Sie
-          insbesondere das Recht auf Auskunft, Berichtigung, Löschung und
-          Einschränkung der Verarbeitung Ihrer personenbezogenen Daten.
-        </p>
+            <section>
+              <h2 className="text-2xl font-light text-neutral-900">
+                3. Google Maps
+              </h2>
 
-        <h2>7. Änderungen</h2>
+              <p className="mt-3">
+                Auf unserer Kontaktseite kann eine Karte von Google Maps
+                eingebunden sein. Beim Laden der Karte können Daten an Google
+                übertragen werden. Weitere Informationen finden Sie in den
+                Datenschutzbestimmungen von Google.
+              </p>
+            </section>
 
-        <p>
-          Wir können diese Datenschutzerklärung bei Bedarf anpassen. Es
-          gilt jeweils die auf dieser Website veröffentlichte aktuelle
-          Fassung.
-        </p>
-      </div>
-    </div>
-  </section>
-</main>
+            <section>
+              <h2 className="text-2xl font-light text-neutral-900">
+                4. Ihre Rechte
+              </h2>
 
+              <p className="mt-3">
+                Sie haben im Rahmen der geltenden gesetzlichen Bestimmungen
+                insbesondere das Recht auf Auskunft, Berichtigung und
+                gegebenenfalls Löschung Ihrer personenbezogenen Daten.
+              </p>
+            </section>
 
-)
+            <section>
+              <h2 className="text-2xl font-light text-neutral-900">
+                5. Kontakt
+              </h2>
+
+              <p className="mt-3">
+                Bei Fragen zum Datenschutz können Sie uns jederzeit unter
+                <a
+                  href="mailto:info@mysan.ch"
+                  className="ml-1"
+                  style={{ color: MYSAN_BLUE }}
+                >
+                  info@mysan.ch
+                </a>{' '}
+                kontaktieren.
+              </p>
+            </section>
+
+          </div>
+
+          <div className="mt-12">
+            <Link
+              href="/kontakt"
+              className="text-sm font-semibold"
+              style={{ color: MYSAN_BLUE }}
+            >
+              ← Zurück zum Kontakt
+            </Link>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+  )
 }

@@ -1,3 +1,4 @@
+
 import type { ReactNode } from 'react'
 
 const MYSAN_BLUE = '#1dabff'
@@ -20,13 +21,11 @@ export default function PageHero({
   children,
 }: PageHeroProps) {
   return (
-    <section className="relative min-h-[calc(100vh-6rem)] overflow-hidden bg-white">
+    <section className="relative overflow-hidden bg-white">
 
-      {/* Hintergrund */}
-
-      <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-[#F4F7FA]" />
-
-      {/* Linker Streifen */}
+      {/* =====================================================
+          LINKER BLAUER STREIFEN
+      ===================================================== */}
 
       <div
         className="absolute left-0 top-0 z-30 h-full w-2"
@@ -35,7 +34,10 @@ export default function PageHero({
         }}
       />
 
-      {/* Auto */}
+
+      {/* =====================================================
+          AUTO / HINTERGRUNDBILD
+      ===================================================== */}
 
       {image && (
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
@@ -55,11 +57,17 @@ export default function PageHero({
                 src={image}
                 alt=""
                 aria-hidden="true"
-                className="h-auto w-full object-contain object-left-top"
+                className="
+                  h-auto
+                  w-full
+                  object-contain
+                  object-left-top
+                "
                 style={{
                   opacity: imageOpacity,
                 }}
               />
+
 
               {/* Oberer Übergang */}
 
@@ -68,13 +76,13 @@ export default function PageHero({
                   absolute
                   inset-x-0
                   top-0
-                  h-32
+                  h-24
                   bg-gradient-to-b
                   from-white
-                  via-white/40
                   to-transparent
                 "
               />
+
 
               {/* Unterer Übergang */}
 
@@ -83,10 +91,10 @@ export default function PageHero({
                   absolute
                   inset-x-0
                   bottom-0
-                  h-48
+                  h-28
                   bg-gradient-to-t
                   from-white
-                  via-white/50
+                  via-white/70
                   to-transparent
                 "
               />
@@ -98,26 +106,54 @@ export default function PageHero({
         </div>
       )}
 
-      {/* Text */}
 
-      <div className="relative z-20 mx-auto flex min-h-[calc(100vh-6rem)] max-w-7xl items-start px-8 pb-[35vh] pt-28 md:px-12 md:pb-[32vh] md:pt-36 lg:px-16">
+      {/* =====================================================
+          HERO TEXT
+      ===================================================== */}
+
+      <div
+        className="
+          relative
+          z-20
+          mx-auto
+          max-w-7xl
+          px-8
+          pb-10
+          pt-28
+          md:px-12
+          md:pb-12
+          md:pt-36
+          lg:px-16
+        "
+      >
 
         <div className="max-w-3xl">
 
-          {/* Strich */}
+
+          {/* =================================================
+              BLAUER STRICH
+          ================================================= */}
 
           <div
-            className="mb-6 h-1 w-16"
+            className="mb-5 h-1 w-16"
             style={{
               backgroundColor: MYSAN_BLUE,
             }}
           />
 
-          {/* Eyebrow */}
+
+          {/* =================================================
+              EYEBROW
+          ================================================= */}
 
           {eyebrow && (
             <p
-              className="text-sm font-semibold uppercase tracking-[0.25em]"
+              className="
+                text-sm
+                font-semibold
+                uppercase
+                tracking-[0.25em]
+              "
               style={{
                 color: MYSAN_BLUE,
               }}
@@ -126,24 +162,54 @@ export default function PageHero({
             </p>
           )}
 
-          {/* Titel */}
 
-          <h1 className="mt-5 text-5xl font-light leading-[1.05] tracking-tight text-neutral-900 md:text-7xl lg:text-8xl">
+          {/* =================================================
+              TITEL
+          ================================================= */}
+
+          <h1
+            className="
+              mt-4
+              text-5xl
+              font-light
+              leading-[1.05]
+              tracking-tight
+              text-neutral-900
+              md:text-7xl
+              lg:text-8xl
+            "
+          >
             {title}
           </h1>
 
-          {/* Beschreibung */}
+
+          {/* =================================================
+              BESCHREIBUNG
+          ================================================= */}
 
           {description && (
-            <p className="mt-8 max-w-xl text-xl font-light leading-8 text-neutral-600 md:text-2xl">
+            <p
+              className="
+                mt-6
+                max-w-xl
+                text-xl
+                font-light
+                leading-8
+                text-neutral-600
+                md:text-2xl
+              "
+            >
               {description}
             </p>
           )}
 
-          {/* Buttons */}
+
+          {/* =================================================
+              BUTTONS
+          ================================================= */}
 
           {children && (
-            <div className="mt-10">
+            <div className="mt-7">
               {children}
             </div>
           )}
@@ -155,3 +221,4 @@ export default function PageHero({
     </section>
   )
 }
+
