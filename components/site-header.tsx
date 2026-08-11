@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
+const MYSAN_BLUE = '#1dabff'
+
 const navigation = [
   {
     label: 'Sanitär',
@@ -23,21 +25,10 @@ const navigation = [
   },
 ]
 
-const MYSAN_BLUE = '#20A7E8'
-
 export default function SiteHeader() {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  /*
-   * Prüft, ob ein Menüpunkt aktiv ist.
-   *
-   * Beispiel:
-   * /referenzen
-   * /referenzen/mein-projekt
-   *
-   * → Referenzen bleibt aktiv.
-   */
   function isActive(href: string) {
     return (
       pathname === href ||
@@ -48,7 +39,7 @@ export default function SiteHeader() {
   return (
     <>
       {/* =====================================================
-          LINKER MYSAN SEITENSTREIFEN
+          LINKER SEITENSTREIFEN
       ===================================================== */}
 
       <div
@@ -83,7 +74,7 @@ export default function SiteHeader() {
             </Link>
 
             {/* =================================================
-                DESKTOP MENÜ
+                DESKTOP NAVIGATION
             ================================================= */}
 
             <nav className="hidden items-center gap-2 lg:flex">
@@ -104,13 +95,12 @@ export default function SiteHeader() {
                       duration-200
                       ${
                         active
-                          ? 'text-[#20A7E8]'
-                          : 'text-neutral-800 hover:text-[#20A7E8]'
+                          ? 'text-[#1dabff]'
+                          : 'text-neutral-800 hover:text-[#1dabff]'
                       }
                     `}
                   >
-
-                    {/* Kurzer linker Strich */}
+                    {/* Linker Strich */}
 
                     <span
                       className={`
@@ -124,14 +114,13 @@ export default function SiteHeader() {
                         duration-200
                         ${
                           active
-                            ? 'bg-[#20A7E8]'
-                            : 'bg-transparent group-hover:bg-[#20A7E8]'
+                            ? 'bg-[#1dabff]'
+                            : 'bg-transparent group-hover:bg-[#1dabff]'
                         }
                       `}
                     />
 
                     {item.label}
-
                   </Link>
                 )
               })}
@@ -143,41 +132,28 @@ export default function SiteHeader() {
               <Link
                 href="/kontakt"
                 className={`
-                  group relative ml-3 flex h-12 items-center
-                  px-6
+                  ml-3
+                  inline-flex
+                  h-12
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  px-7
                   text-sm
                   font-semibold
                   transition-all
                   duration-200
+                  hover:-translate-y-0.5
                   ${
                     pathname === '/kontakt'
-                      ? 'text-[#20A7E8]'
-                      : 'text-white'
+                      ? 'border-[#1dabff] bg-white text-[#1dabff]'
+                      : 'border-[#1dabff] bg-[#1dabff] text-white hover:opacity-90'
                   }
                 `}
-                style={{
-                  backgroundColor:
-                    pathname === '/kontakt'
-                      ? 'transparent'
-                      : MYSAN_BLUE,
-                }}
               >
-
-                {/* Kurzer linker Strich bei aktivem Kontakt */}
-
-                {pathname === '/kontakt' && (
-                  <span
-                    className="absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2"
-                    style={{
-                      backgroundColor: MYSAN_BLUE,
-                    }}
-                  />
-                )}
-
                 Kontakt
-
               </Link>
-
             </nav>
 
             {/* =================================================
@@ -192,18 +168,13 @@ export default function SiteHeader() {
                   : 'Menü öffnen'
               }
               aria-expanded={menuOpen}
-              onClick={() =>
-                setMenuOpen(!menuOpen)
-              }
-              className="relative flex h-11 w-11 items-center justify-center rounded-full text-white lg:hidden"
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="relative flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform duration-200 hover:scale-105 lg:hidden"
               style={{
                 backgroundColor: MYSAN_BLUE,
               }}
             >
-
               <div className="relative h-5 w-6">
-
-                {/* Obere Linie */}
 
                 <span
                   className={`
@@ -221,8 +192,6 @@ export default function SiteHeader() {
                     }
                   `}
                 />
-
-                {/* Mittlere Linie */}
 
                 <span
                   className={`
@@ -242,8 +211,6 @@ export default function SiteHeader() {
                   `}
                 />
 
-                {/* Untere Linie */}
-
                 <span
                   className={`
                     absolute
@@ -262,9 +229,7 @@ export default function SiteHeader() {
                 />
 
               </div>
-
             </button>
-
           </div>
         </div>
       </header>
@@ -277,7 +242,8 @@ export default function SiteHeader() {
         className={`
           fixed inset-0 z-40
           bg-white
-          transition-all duration-300
+          transition-all
+          duration-300
           lg:hidden
           ${
             menuOpen
@@ -287,9 +253,7 @@ export default function SiteHeader() {
         `}
       >
 
-        {/* =================================================
-            LINKER SEITENSTREIFEN
-        ================================================= */}
+        {/* Linker Rand */}
 
         <div
           className="absolute left-0 top-0 h-full w-2"
@@ -306,17 +270,16 @@ export default function SiteHeader() {
 
           <nav className="flex flex-col">
 
-            {navigation.map((item, index) => {
+            {navigation.map((item) => {
               const active = isActive(item.href)
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() =>
-                    setMenuOpen(false)
-                  }
+                  onClick={() => setMenuOpen(false)}
                   className={`
+                    group
                     flex
                     items-center
                     border-b
@@ -330,25 +293,46 @@ export default function SiteHeader() {
                     duration-200
                     ${
                       active
-                        ? 'border-l-[#20A7E8] text-[#20A7E8]'
-                        : 'border-l-transparent text-neutral-900 hover:border-l-[#20A7E8] hover:text-[#20A7E8]'
+                        ? 'border-l-[#1dabff] text-[#1dabff]'
+                        : 'border-l-transparent text-neutral-900 hover:border-l-[#1dabff] hover:text-[#1dabff]'
                     }
                   `}
                 >
 
-                  {/* Nummer */}
+                  {/* WASSERTROPFEN */}
 
                   <span
-                    className="mr-5 text-xs font-semibold"
+                    className={`
+                      mr-5
+                      flex
+                      h-5
+                      w-5
+                      shrink-0
+                      items-center
+                      justify-center
+                      transition-all
+                      duration-300
+                      ${
+                        active
+                          ? 'scale-110 opacity-100'
+                          : 'scale-100 opacity-35 group-hover:opacity-100'
+                      }
+                    `}
                     style={{
                       color: MYSAN_BLUE,
                     }}
+                    aria-hidden="true"
                   >
-                    {String(index + 1).padStart(2, '0')}
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="h-5 w-5"
+                    >
+                      <path d="M12 2.5C12 2.5 5.5 10.1 5.5 15.2C5.5 19.3 8.4 22 12 22s6.5-2.7 6.5-6.8C18.5 10.1 12 2.5 12 2.5Z" />
+                    </svg>
                   </span>
 
                   {item.label}
-
                 </Link>
               )
             })}
@@ -359,89 +343,73 @@ export default function SiteHeader() {
 
             <Link
               href="/kontakt"
-              onClick={() =>
-                setMenuOpen(false)
-              }
+              onClick={() => setMenuOpen(false)}
               className={`
                 mt-8
                 flex
+                h-14
                 items-center
                 justify-between
-                border-l-4
-                px-6
-                py-4
+                rounded-full
+                border
+                px-7
                 text-base
                 font-semibold
                 transition-all
                 duration-200
+                hover:-translate-y-0.5
                 ${
                   pathname === '/kontakt'
-                    ? 'border-l-[#20A7E8] bg-white text-[#20A7E8]'
-                    : 'border-l-transparent text-white'
+                    ? 'border-[#1dabff] bg-white text-[#1dabff]'
+                    : 'border-[#1dabff] bg-[#1dabff] text-white'
                 }
               `}
-              style={{
-                backgroundColor:
-                  pathname === '/kontakt'
-                    ? 'white'
-                    : MYSAN_BLUE,
-              }}
             >
-
-              Kontakt aufnehmen
+              <span>
+                Kontakt aufnehmen
+              </span>
 
               <span className="text-xl">
                 →
               </span>
-
             </Link>
-
           </nav>
 
           {/* =================================================
-              DEZENTER FOOTER
+              KLEINE RECHTLICHE LINKS
           ================================================= */}
 
           <div className="mt-auto pt-8">
-
             <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-neutral-400">
 
               <Link
                 href="/impressum"
-                onClick={() =>
-                  setMenuOpen(false)
-                }
-                className="transition-colors hover:text-[#20A7E8]"
+                onClick={() => setMenuOpen(false)}
+                className="transition-colors hover:text-[#1dabff]"
               >
                 Impressum
               </Link>
 
               <Link
                 href="/datenschutz"
-                onClick={() =>
-                  setMenuOpen(false)
-                }
-                className="transition-colors hover:text-[#20A7E8]"
+                onClick={() => setMenuOpen(false)}
+                className="transition-colors hover:text-[#1dabff]"
               >
                 Datenschutz
               </Link>
 
               <Link
                 href="/cookies"
-                onClick={() =>
-                  setMenuOpen(false)
-                }
-                className="transition-colors hover:text-[#20A7E8]"
+                onClick={() => setMenuOpen(false)}
+                className="transition-colors hover:text-[#1dabff]"
               >
                 Cookies
               </Link>
 
             </div>
-
           </div>
 
         </div>
-
       </div>
     </>
   )

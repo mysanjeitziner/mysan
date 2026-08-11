@@ -2,7 +2,7 @@ import Link from 'next/link'
 import SiteHeader from '@/components/site-header'
 import { createClient } from '@/lib/supabase/server'
 
-const MYSAN_BLUE = '#3C70B7'
+const MYSAN_BLUE = '#1dabff'
 
 type Reference = {
   id: string
@@ -128,9 +128,7 @@ export default async function HomePage() {
    * =========================================================
    */
 
-  function getReferenceImage(
-    referenceId: string
-  ) {
+  function getReferenceImage(referenceId: string) {
     return referenceImages.find(
       (image) =>
         image.reference_id === referenceId
@@ -157,222 +155,273 @@ export default async function HomePage() {
 
       <SiteHeader />
 
-     {/* =====================================================
-    HERO
-===================================================== */}
+      {/* =====================================================
+          HERO
+      ===================================================== */}
 
-<section className="relative min-h-screen overflow-hidden bg-white">
+      <section className="relative min-h-screen overflow-hidden bg-white">
 
-  {/* Blauer linker Rand */}
+        {/* Linker Seitenstreifen */}
 
-  <div
-    className="absolute left-0 top-0 z-30 h-full w-2"
-    style={{
-      backgroundColor: MYSAN_BLUE,
-    }}
-  />
-
-  {/* Dezenter Hintergrund */}
-
-  <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-[#F4F7FA]" />
-
-  {/* =================================================
-      TEXT
-  ================================================= */}
-
-  <div className="relative z-20 mx-auto flex min-h-screen max-w-7xl items-start px-8 pb-[42vh] pt-36 md:px-12 md:pb-[38vh] md:pt-40 lg:px-16">
-
-    <div className="max-w-3xl">
-
-      {/* Kleiner blauer Strich */}
-
-      <div
-        className="mb-6 h-1 w-16"
-        style={{
-          backgroundColor: MYSAN_BLUE,
-        }}
-      />
-
-      {/* Firma */}
-
-      <p
-        className="text-sm font-semibold uppercase tracking-[0.25em]"
-        style={{
-          color: MYSAN_BLUE,
-        }}
-      >
-        mySan Jeitziner
-      </p>
-
-      {/* Haupttitel */}
-
-      <h1 className="mt-5 text-5xl font-light leading-[1.05] tracking-tight text-neutral-900 md:text-7xl lg:text-8xl">
-
-        Ihr
-        <br />
-
-        <span
-          style={{
-            color: MYSAN_BLUE,
-          }}
-        >
-          Sanitär
-        </span>
-
-        <br />
-
-        im Wallis
-
-      </h1>
-
-      {/* Beschreibung */}
-
-      <p className="mt-8 max-w-xl text-xl font-light leading-8 text-neutral-600 md:text-2xl">
-
-        Für sämtliche Sanitärarbeiten
-        <br className="hidden md:block" />
-        in und ums Haus.
-
-      </p>
-
-      {/* Buttons */}
-
-      <div className="mt-10 flex flex-wrap gap-4">
-
-        <Link
-          href="/kontakt"
-          className="inline-flex items-center rounded-full px-7 py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
+        <div
+          className="absolute left-0 top-0 z-30 h-full w-2"
           style={{
             backgroundColor: MYSAN_BLUE,
           }}
-        >
-          Kontakt aufnehmen
+        />
 
-          <span className="ml-3 text-lg">
-            →
+        {/* Dezenter Hintergrund */}
+
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-[#F4F7FA]" />
+
+        {/* =================================================
+            AUTO
+            Quer hinter dem Text
+        ================================================= */}
+
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
+
+          <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
+
+            <div
+              className="
+                relative
+                overflow-hidden
+                [mask-image:linear-gradient(to_right,transparent_0%,black_8%,black_88%,transparent_100%)]
+                [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_8%,black_88%,transparent_100%)]
+              "
+            >
+
+              <img
+                src="/auto.png"
+                alt=""
+                aria-hidden="true"
+                className="
+                  h-auto
+                  w-full
+                  object-contain
+                  object-left-top
+                  opacity-[0.16]
+                "
+              />
+
+              {/* Oberer weicher Übergang */}
+
+              <div
+                className="
+                  absolute
+                  inset-x-0
+                  top-0
+                  h-40
+                  bg-gradient-to-b
+                  from-white
+                  via-white/60
+                  to-transparent
+                "
+              />
+
+              {/* Unterer weicher Übergang */}
+
+              <div
+                className="
+                  absolute
+                  inset-x-0
+                  bottom-0
+                  h-52
+                  bg-gradient-to-t
+                  from-white
+                  via-white/50
+                  to-transparent
+                "
+              />
+
+              {/* Linker weicher Übergang */}
+
+              <div
+                className="
+                  absolute
+                  inset-y-0
+                  left-0
+                  w-32
+                  bg-gradient-to-r
+                  from-white
+                  to-transparent
+                "
+              />
+
+              {/* Rechter weicher Übergang */}
+
+              <div
+                className="
+                  absolute
+                  inset-y-0
+                  right-0
+                  w-32
+                  bg-gradient-to-l
+                  from-white
+                  to-transparent
+                "
+              />
+
+            </div>
+          </div>
+        </div>
+
+        {/* =================================================
+            HERO TEXT
+        ================================================= */}
+
+        <div className="relative z-20 mx-auto flex min-h-screen max-w-7xl items-start px-8 pb-[42vh] pt-36 md:px-12 md:pb-[38vh] md:pt-40 lg:px-16">
+
+          <div className="max-w-3xl">
+
+            {/* Blauer Strich */}
+
+            <div
+              className="mb-6 h-1 w-16"
+              style={{
+                backgroundColor: MYSAN_BLUE,
+              }}
+            />
+
+            {/* Firma */}
+
+            <p
+              className="text-sm font-semibold uppercase tracking-[0.25em]"
+              style={{
+                color: MYSAN_BLUE,
+              }}
+            >
+              mySan Jeitziner
+            </p>
+
+            {/* Haupttitel */}
+
+            <h1 className="mt-5 text-5xl font-light leading-[1.05] tracking-tight text-neutral-900 md:text-7xl lg:text-8xl">
+
+              Ihr
+              <br />
+
+              <span
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Sanitär
+              </span>
+
+              <br />
+
+              im Wallis
+
+            </h1>
+
+            {/* Beschreibung */}
+
+            <p className="mt-8 max-w-xl text-xl font-light leading-8 text-neutral-600 md:text-2xl">
+
+              Für sämtliche Sanitärarbeiten
+              <br className="hidden md:block" />
+              in und ums Haus.
+
+            </p>
+
+            {/* Buttons */}
+
+            <div className="mt-10 flex flex-wrap gap-4">
+
+              <Link
+                href="/kontakt"
+                className="
+                  inline-flex
+                  items-center
+                  rounded-full
+                  border
+                  px-7
+                  py-3.5
+                  text-sm
+                  font-semibold
+                  text-white
+                  transition-all
+                  duration-200
+                  hover:-translate-y-0.5
+                  hover:opacity-90
+                "
+                style={{
+                  backgroundColor: MYSAN_BLUE,
+                  borderColor: MYSAN_BLUE,
+                }}
+              >
+                Kontakt aufnehmen
+
+                <span className="ml-3 text-lg">
+                  →
+                </span>
+              </Link>
+
+              <Link
+                href="/referenzen"
+                className="
+                  inline-flex
+                  items-center
+                  rounded-full
+                  border
+                  px-7
+                  py-3.5
+                  text-sm
+                  font-semibold
+                  transition-all
+                  duration-200
+                  hover:-translate-y-0.5
+                  hover:bg-white
+                "
+                style={{
+                  borderColor: MYSAN_BLUE,
+                  color: MYSAN_BLUE,
+                }}
+              >
+                Referenzen
+              </Link>
+
+            </div>
+
+          </div>
+        </div>
+
+        {/* Willkommen */}
+
+        <div className="absolute bottom-8 left-10 z-30 md:left-16">
+
+          <p
+            className="text-sm font-medium tracking-wide"
+            style={{
+              color: MYSAN_BLUE,
+            }}
+          >
+            Herzlich Willkommen
+          </p>
+
+        </div>
+
+        {/* Entdecken */}
+
+        <div className="absolute bottom-8 right-8 z-30 hidden items-center gap-3 text-xs text-neutral-400 md:flex">
+
+          <span>
+            Entdecken
           </span>
-        </Link>
 
-        <Link
-          href="/referenzen"
-          className="inline-flex items-center rounded-full border px-7 py-3.5 text-sm font-semibold transition hover:bg-gray-50"
-          style={{
-            borderColor: MYSAN_BLUE,
-            color: MYSAN_BLUE,
-          }}
-        >
-          Referenzen
-        </Link>
+          <span
+            className="h-px w-10"
+            style={{
+              backgroundColor: MYSAN_BLUE,
+            }}
+          />
 
-      </div>
+        </div>
 
-    </div>
+      </section>
 
-  </div>
-
-{/* =================================================
-    AUTO – DEZENTES, WEICH AUSLAUFENDES HINTERGRUNDMOTIV
-================================================= */}
-
-<div className="pointer-events-none absolute left-0 right-0 top-0 z-10">
-
-  <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
-
-    <div
-      className="
-        relative
-        overflow-hidden
-        [mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_88%,transparent_100%)]
-        [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_88%,transparent_100%)]
-      "
-    >
-
-      <img
-        src="/auto.png"
-        alt=""
-        aria-hidden="true"
-        className="
-          h-auto
-          w-full
-          object-contain
-          object-left-top
-          opacity-20
-        "
-      />
-
-      {/* Oberer weicher Übergang */}
-
-      <div
-        className="
-          absolute
-          inset-x-0
-          top-0
-          h-32
-          bg-gradient-to-b
-          from-white
-          via-white/40
-          to-transparent
-        "
-      />
-
-      {/* Unterer weicher Übergang */}
-
-      <div
-        className="
-          absolute
-          inset-x-0
-          bottom-0
-          h-40
-          bg-gradient-to-t
-          from-white
-          via-white/50
-          to-transparent
-        "
-      />
-
-    </div>
-
-  </div>
-
-</div>
-
-  {/* =================================================
-      HERZLICH WILLKOMMEN
-  ================================================= */}
-
-  <div className="absolute bottom-8 left-10 z-30 md:left-16">
-
-    <p
-      className="text-sm font-medium tracking-wide"
-      style={{
-        color: MYSAN_BLUE,
-      }}
-    >
-      Herzlich Willkommen
-    </p>
-
-  </div>
-
-  {/* =================================================
-      SCROLL HINWEIS
-  ================================================= */}
-
-  <div className="absolute bottom-8 right-8 z-30 hidden items-center gap-3 text-xs text-neutral-400 md:flex">
-
-    <span>
-      Entdecken
-    </span>
-
-    <span
-      className="h-px w-10"
-      style={{
-        backgroundColor: MYSAN_BLUE,
-      }}
-    />
-
-  </div>
-
-</section>
       {/* =====================================================
           INTRO
       ===================================================== */}
@@ -446,6 +495,7 @@ export default async function HomePage() {
                 }}
               >
                 Mehr über uns
+
                 <span className="ml-3">
                   →
                 </span>
@@ -454,9 +504,7 @@ export default async function HomePage() {
             </div>
 
           </div>
-
         </div>
-
       </section>
 
       {/* =====================================================
@@ -616,9 +664,7 @@ export default async function HomePage() {
             </Link>
 
           </div>
-
         </div>
-
       </section>
 
       {/* =====================================================
@@ -674,9 +720,7 @@ export default async function HomePage() {
               {references.map((reference) => {
 
                 const image =
-                  getReferenceImage(
-                    reference.id
-                  )
+                  getReferenceImage(reference.id)
 
                 return (
                   <Link
@@ -757,7 +801,6 @@ export default async function HomePage() {
           )}
 
         </div>
-
       </section>
 
       {/* =====================================================
@@ -837,9 +880,7 @@ export default async function HomePage() {
                   <div className="p-7">
 
                     <p className="text-xs font-medium text-neutral-400">
-                      {formatDate(
-                        item.created_at
-                      )}
+                      {formatDate(item.created_at)}
                     </p>
 
                     <h3 className="mt-3 text-xl font-medium">
@@ -870,11 +911,8 @@ export default async function HomePage() {
               ))}
 
             </div>
-
           </div>
-
         </section>
-
       )}
 
       {/* =====================================================
@@ -918,178 +956,72 @@ export default async function HomePage() {
 
             <Link
               href="/kontakt"
-              className="inline-flex w-fit items-center rounded-full bg-white px-8 py-4 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-100"
+              className="
+                inline-flex
+                w-fit
+                items-center
+                rounded-full
+                bg-white
+                px-8
+                py-4
+                text-sm
+                font-semibold
+                text-neutral-900
+                transition
+                hover:-translate-y-0.5
+                hover:bg-neutral-100
+              "
             >
               Kontakt aufnehmen
+
               <span className="ml-4 text-lg">
                 →
               </span>
+
+            </Link>
+
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          KLEINER HELLER FOOTER
+      ===================================================== */}
+
+      <footer className="border-t border-neutral-200 bg-white">
+
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-8 py-6 text-xs text-neutral-400 md:flex-row md:px-12 lg:px-16">
+
+          <p>
+            © {new Date().getFullYear()} Mysan Jeitziner
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+
+            <Link
+              href="/impressum"
+              className="transition-colors hover:text-[#1dabff]"
+            >
+              Impressum
+            </Link>
+
+            <Link
+              href="/datenschutz"
+              className="transition-colors hover:text-[#1dabff]"
+            >
+              Datenschutz
+            </Link>
+
+            <Link
+              href="/cookies"
+              className="transition-colors hover:text-[#1dabff]"
+            >
+              Cookies
             </Link>
 
           </div>
 
         </div>
-
-      </section>
-
-      {/* =====================================================
-          FOOTER
-      ===================================================== */}
-
-      <footer className="bg-neutral-950 text-white">
-
-        <div className="mx-auto max-w-7xl px-8 py-14 md:px-12 lg:px-16">
-
-          <div className="grid gap-12 md:grid-cols-3">
-
-            {/* Firma */}
-
-            <div>
-
-              <div className="flex items-center gap-3">
-
-                <div
-                  className="flex h-11 w-11 items-center justify-center"
-                  style={{
-                    backgroundColor: MYSAN_BLUE,
-                  }}
-                >
-                  <span className="text-2xl text-white">
-                    y
-                  </span>
-                </div>
-
-                <div>
-
-                  <div className="text-xl font-medium">
-                    mySan
-                  </div>
-
-                  <div className="text-xs font-bold tracking-wide text-white/60">
-                    JEITZINER
-                  </div>
-
-                </div>
-
-              </div>
-
-              <p className="mt-6 max-w-xs text-sm leading-6 text-white/50">
-
-                Sanitär und Heizung
-                <br />
-                im Wallis.
-
-              </p>
-
-            </div>
-
-            {/* Navigation */}
-
-            <div>
-
-              <h3 className="text-sm font-semibold">
-                Navigation
-              </h3>
-
-              <div className="mt-5 flex flex-col gap-3 text-sm text-white/50">
-
-                <Link
-                  href="/"
-                  className="hover:text-white"
-                >
-                  Startseite
-                </Link>
-
-                <Link
-                  href="/sanitaer"
-                  className="hover:text-white"
-                >
-                  Sanitär
-                </Link>
-
-                <Link
-                  href="/heizung"
-                  className="hover:text-white"
-                >
-                  Heizung
-                </Link>
-
-                <Link
-                  href="/referenzen"
-                  className="hover:text-white"
-                >
-                  Referenzen
-                </Link>
-
-                <Link
-                  href="/news"
-                  className="hover:text-white"
-                >
-                  News
-                </Link>
-
-                <Link
-                  href="/kontakt"
-                  className="hover:text-white"
-                >
-                  Kontakt
-                </Link>
-
-              </div>
-
-            </div>
-
-            {/* Rechtliches */}
-
-            <div>
-
-              <h3 className="text-sm font-semibold">
-                Rechtliches
-              </h3>
-
-              <div className="mt-5 flex flex-col gap-3 text-sm text-white/50">
-
-                <Link
-                  href="/impressum"
-                  className="hover:text-white"
-                >
-                  Impressum
-                </Link>
-
-                <Link
-                  href="/datenschutz"
-                  className="hover:text-white"
-                >
-                  Datenschutz
-                </Link>
-
-                <Link
-                  href="/cookies"
-                  className="hover:text-white"
-                >
-                  Cookies
-                </Link>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          <div className="mt-14 flex flex-col justify-between gap-4 border-t border-white/10 pt-6 text-xs text-white/30 md:flex-row">
-
-            <p>
-              © {new Date().getFullYear()} Mysan Jeitziner
-            </p>
-
-            <p>
-              Sanitär · Heizung · Service
-            </p>
-
-          </div>
-
-        </div>
-
       </footer>
 
     </main>
