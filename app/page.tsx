@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import SiteHeader from '@/components/site-header'
+import PageHero from '@/components/page-hero'
 import { createClient } from '@/lib/supabase/server'
 
 const MYSAN_BLUE = '#1dabff'
@@ -35,11 +35,9 @@ type News = {
 export default async function HomePage() {
   const supabase = await createClient()
 
-  /*
-   * =========================================================
-   * REFERENZEN
-   * =========================================================
-   */
+  /* =========================================================
+     REFERENZEN
+  ========================================================= */
 
   const { data: referencesData } = await supabase
     .from('references')
@@ -62,11 +60,9 @@ export default async function HomePage() {
   const references =
     (referencesData as Reference[] | null) || []
 
-  /*
-   * =========================================================
-   * REFERENZ-BILDER
-   * =========================================================
-   */
+  /* =========================================================
+     REFERENZ-BILDER
+  ========================================================= */
 
   const referenceIds = references.map(
     (reference) => reference.id
@@ -83,10 +79,7 @@ export default async function HomePage() {
         image_url,
         sort_order
       `)
-      .in(
-        'reference_id',
-        referenceIds
-      )
+      .in('reference_id', referenceIds)
       .order('sort_order', {
         ascending: true,
       })
@@ -95,11 +88,9 @@ export default async function HomePage() {
       (imagesData as ReferenceImage[] | null) || []
   }
 
-  /*
-   * =========================================================
-   * NEWS
-   * =========================================================
-   */
+  /* =========================================================
+     NEWS
+  ========================================================= */
 
   const { data: newsData } = await supabase
     .from('news')
@@ -122,11 +113,9 @@ export default async function HomePage() {
   const news =
     (newsData as News[] | null) || []
 
-  /*
-   * =========================================================
-   * HILFSFUNKTIONEN
-   * =========================================================
-   */
+  /* =========================================================
+     HILFSFUNKTIONEN
+  ========================================================= */
 
   function getReferenceImage(referenceId: string) {
     return referenceImages.find(
@@ -147,280 +136,73 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-neutral-900">
-
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
-
-      <SiteHeader />
+    <div className="bg-white text-neutral-900">
 
       {/* =====================================================
           HERO
       ===================================================== */}
 
-      <section className="relative min-h-screen overflow-hidden bg-white">
+      <PageHero
+        eyebrow="mySan Jeitziner"
+        title={
+          <>
+            Ihr
+            <br />
 
-        {/* Linker Seitenstreifen */}
-
-        <div
-          className="absolute left-0 top-0 z-30 h-full w-2"
-          style={{
-            backgroundColor: MYSAN_BLUE,
-          }}
-        />
-
-        {/* Dezenter Hintergrund */}
-
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-[#F4F7FA]" />
-
-        {/* =================================================
-            AUTO
-            Quer hinter dem Text
-        ================================================= */}
-
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
-
-          <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
-
-            <div
-              className="
-                relative
-                overflow-hidden
-                [mask-image:linear-gradient(to_right,transparent_0%,black_8%,black_88%,transparent_100%)]
-                [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_8%,black_88%,transparent_100%)]
-              "
-            >
-
-              <img
-                src="/auto.png"
-                alt=""
-                aria-hidden="true"
-                className="
-                  h-auto
-                  w-full
-                  object-contain
-                  object-left-top
-                  opacity-[0.16]
-                "
-              />
-
-              {/* Oberer weicher Übergang */}
-
-              <div
-                className="
-                  absolute
-                  inset-x-0
-                  top-0
-                  h-40
-                  bg-gradient-to-b
-                  from-white
-                  via-white/60
-                  to-transparent
-                "
-              />
-
-              {/* Unterer weicher Übergang */}
-
-              <div
-                className="
-                  absolute
-                  inset-x-0
-                  bottom-0
-                  h-52
-                  bg-gradient-to-t
-                  from-white
-                  via-white/50
-                  to-transparent
-                "
-              />
-
-              {/* Linker weicher Übergang */}
-
-              <div
-                className="
-                  absolute
-                  inset-y-0
-                  left-0
-                  w-32
-                  bg-gradient-to-r
-                  from-white
-                  to-transparent
-                "
-              />
-
-              {/* Rechter weicher Übergang */}
-
-              <div
-                className="
-                  absolute
-                  inset-y-0
-                  right-0
-                  w-32
-                  bg-gradient-to-l
-                  from-white
-                  to-transparent
-                "
-              />
-
-            </div>
-          </div>
-        </div>
-
-        {/* =================================================
-            HERO TEXT
-        ================================================= */}
-
-        <div className="relative z-20 mx-auto flex min-h-screen max-w-7xl items-start px-8 pb-[42vh] pt-36 md:px-12 md:pb-[38vh] md:pt-40 lg:px-16">
-
-          <div className="max-w-3xl">
-
-            {/* Blauer Strich */}
-
-            <div
-              className="mb-6 h-1 w-16"
-              style={{
-                backgroundColor: MYSAN_BLUE,
-              }}
-            />
-
-            {/* Firma */}
-
-            <p
-              className="text-sm font-semibold uppercase tracking-[0.25em]"
+            <span
               style={{
                 color: MYSAN_BLUE,
               }}
             >
-              mySan Jeitziner
-            </p>
+              Sanitär
+            </span>
 
-            {/* Haupttitel */}
+            <br />
 
-            <h1 className="mt-5 text-5xl font-light leading-[1.05] tracking-tight text-neutral-900 md:text-7xl lg:text-8xl">
+            im Wallis
+          </>
+        }
+        description={
+          <>
+            Für sämtliche Sanitärarbeiten
+            <br className="hidden md:block" />
+            in und ums Haus.
+          </>
+        }
+        image="/auto.png"
+        imageOpacity={0.18}
+      >
 
-              Ihr
-              <br />
+        <div className="flex flex-wrap gap-4">
 
-              <span
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Sanitär
-              </span>
-
-              <br />
-
-              im Wallis
-
-            </h1>
-
-            {/* Beschreibung */}
-
-            <p className="mt-8 max-w-xl text-xl font-light leading-8 text-neutral-600 md:text-2xl">
-
-              Für sämtliche Sanitärarbeiten
-              <br className="hidden md:block" />
-              in und ums Haus.
-
-            </p>
-
-            {/* Buttons */}
-
-            <div className="mt-10 flex flex-wrap gap-4">
-
-              <Link
-                href="/kontakt"
-                className="
-                  inline-flex
-                  items-center
-                  rounded-full
-                  border
-                  px-7
-                  py-3.5
-                  text-sm
-                  font-semibold
-                  text-white
-                  transition-all
-                  duration-200
-                  hover:-translate-y-0.5
-                  hover:opacity-90
-                "
-                style={{
-                  backgroundColor: MYSAN_BLUE,
-                  borderColor: MYSAN_BLUE,
-                }}
-              >
-                Kontakt aufnehmen
-
-                <span className="ml-3 text-lg">
-                  →
-                </span>
-              </Link>
-
-              <Link
-                href="/referenzen"
-                className="
-                  inline-flex
-                  items-center
-                  rounded-full
-                  border
-                  px-7
-                  py-3.5
-                  text-sm
-                  font-semibold
-                  transition-all
-                  duration-200
-                  hover:-translate-y-0.5
-                  hover:bg-white
-                "
-                style={{
-                  borderColor: MYSAN_BLUE,
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Referenzen
-              </Link>
-
-            </div>
-
-          </div>
-        </div>
-
-        {/* Willkommen */}
-
-        <div className="absolute bottom-8 left-10 z-30 md:left-16">
-
-          <p
-            className="text-sm font-medium tracking-wide"
-            style={{
-              color: MYSAN_BLUE,
-            }}
-          >
-            Herzlich Willkommen
-          </p>
-
-        </div>
-
-        {/* Entdecken */}
-
-        <div className="absolute bottom-8 right-8 z-30 hidden items-center gap-3 text-xs text-neutral-400 md:flex">
-
-          <span>
-            Entdecken
-          </span>
-
-          <span
-            className="h-px w-10"
+          <Link
+            href="/kontakt"
+            className="inline-flex h-12 items-center justify-center rounded-full px-7 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90"
             style={{
               backgroundColor: MYSAN_BLUE,
             }}
-          />
+          >
+            Kontakt aufnehmen
+
+            <span className="ml-3 text-lg">
+              →
+            </span>
+          </Link>
+
+          <Link
+            href="/referenzen"
+            className="inline-flex h-12 items-center justify-center rounded-full border px-7 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:bg-neutral-50"
+            style={{
+              borderColor: MYSAN_BLUE,
+              color: MYSAN_BLUE,
+            }}
+          >
+            Referenzen
+          </Link>
 
         </div>
 
-      </section>
+      </PageHero>
 
       {/* =====================================================
           INTRO
@@ -447,7 +229,7 @@ export default async function HomePage() {
                   color: MYSAN_BLUE,
                 }}
               >
-                Mysan Jeitziner
+                mySan Jeitziner
               </p>
 
               <h2 className="mt-5 text-4xl font-light leading-tight tracking-tight md:text-6xl">
@@ -488,7 +270,7 @@ export default async function HomePage() {
               </p>
 
               <Link
-                href="/kontakt"
+                href="/ueber-uns"
                 className="mt-8 inline-flex items-center text-sm font-semibold"
                 style={{
                   color: MYSAN_BLUE,
@@ -504,7 +286,9 @@ export default async function HomePage() {
             </div>
 
           </div>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -545,15 +329,15 @@ export default async function HomePage() {
 
           <div className="mt-16 grid gap-6 md:grid-cols-2">
 
-            {/* Sanitär */}
+            {/* SANITÄR */}
 
             <Link
               href="/sanitaer"
-              className="group relative overflow-hidden bg-white p-8 transition hover:-translate-y-1 md:p-12"
+              className="group relative overflow-hidden bg-white p-8 transition-all duration-300 hover:-translate-y-1 md:p-12"
             >
 
               <div
-                className="absolute left-0 top-0 h-full w-1 transition-all group-hover:w-2"
+                className="absolute left-0 top-0 h-full w-1 transition-all duration-300 group-hover:w-2"
                 style={{
                   backgroundColor: MYSAN_BLUE,
                 }}
@@ -567,7 +351,7 @@ export default async function HomePage() {
                     color: MYSAN_BLUE,
                   }}
                 >
-                  01
+                  Sanitär
                 </span>
 
                 <span
@@ -604,15 +388,15 @@ export default async function HomePage() {
 
             </Link>
 
-            {/* Heizung */}
+            {/* HEIZUNG */}
 
             <Link
               href="/heizung"
-              className="group relative overflow-hidden bg-white p-8 transition hover:-translate-y-1 md:p-12"
+              className="group relative overflow-hidden bg-white p-8 transition-all duration-300 hover:-translate-y-1 md:p-12"
             >
 
               <div
-                className="absolute left-0 top-0 h-full w-1 transition-all group-hover:w-2"
+                className="absolute left-0 top-0 h-full w-1 transition-all duration-300 group-hover:w-2"
                 style={{
                   backgroundColor: MYSAN_BLUE,
                 }}
@@ -626,7 +410,7 @@ export default async function HomePage() {
                     color: MYSAN_BLUE,
                   }}
                 >
-                  02
+                  Heizung
                 </span>
 
                 <span
@@ -664,7 +448,9 @@ export default async function HomePage() {
             </Link>
 
           </div>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -723,6 +509,7 @@ export default async function HomePage() {
                   getReferenceImage(reference.id)
 
                 return (
+
                   <Link
                     key={reference.id}
                     href={`/referenzen/${reference.slug}`}
@@ -784,6 +571,7 @@ export default async function HomePage() {
                     </div>
 
                   </Link>
+
                 )
               })}
 
@@ -801,6 +589,7 @@ export default async function HomePage() {
           )}
 
         </div>
+
       </section>
 
       {/* =====================================================
@@ -911,8 +700,11 @@ export default async function HomePage() {
               ))}
 
             </div>
+
           </div>
+
         </section>
+
       )}
 
       {/* =====================================================
@@ -956,22 +748,9 @@ export default async function HomePage() {
 
             <Link
               href="/kontakt"
-              className="
-                inline-flex
-                w-fit
-                items-center
-                rounded-full
-                bg-white
-                px-8
-                py-4
-                text-sm
-                font-semibold
-                text-neutral-900
-                transition
-                hover:-translate-y-0.5
-                hover:bg-neutral-100
-              "
+              className="inline-flex w-fit items-center rounded-full bg-white px-8 py-4 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-100"
             >
+
               Kontakt aufnehmen
 
               <span className="ml-4 text-lg">
@@ -981,49 +760,11 @@ export default async function HomePage() {
             </Link>
 
           </div>
+
         </div>
+
       </section>
 
-      {/* =====================================================
-          KLEINER HELLER FOOTER
-      ===================================================== */}
-
-      <footer className="border-t border-neutral-200 bg-white">
-
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-8 py-6 text-xs text-neutral-400 md:flex-row md:px-12 lg:px-16">
-
-          <p>
-            © {new Date().getFullYear()} Mysan Jeitziner
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-
-            <Link
-              href="/impressum"
-              className="transition-colors hover:text-[#1dabff]"
-            >
-              Impressum
-            </Link>
-
-            <Link
-              href="/datenschutz"
-              className="transition-colors hover:text-[#1dabff]"
-            >
-              Datenschutz
-            </Link>
-
-            <Link
-              href="/cookies"
-              className="transition-colors hover:text-[#1dabff]"
-            >
-              Cookies
-            </Link>
-
-          </div>
-
-        </div>
-      </footer>
-
-    </main>
+    </div>
   )
 }

@@ -1,23 +1,58 @@
+import LegalPage from '@/components/legal-page'
+
 export default function ImpressumPage() {
   return (
-    <main className="min-h-screen bg-white px-6 py-20">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="text-4xl font-semibold text-[#3C70B7]">
-          Impressum
-        </h1>
+    <LegalPage
+      label="Rechtliches"
+      title="Impressum"
+    >
 
-        <p className="mt-8 text-gray-600">
-          Mysan Jeitziner
-        </p>
+      <h2>Angaben zum Unternehmen</h2>
 
-        <p className="mt-2 text-gray-600">
-          Sanitär & Heizung
-        </p>
+      <p>
+        <strong>mySan Jeitziner</strong>
+        <br />
+        Sanitär und Heizung
+        <br />
+        Wallis, Schweiz
+      </p>
 
-        <p className="mt-8 text-gray-600">
-          Weitere Angaben folgen.
-        </p>
-      </div>
-    </main>
-  );
+      <h2>Kontakt</h2>
+
+      <p>
+        Telefon: [Telefonnummer]
+        <br />
+        E-Mail: [E-Mail-Adresse]
+        <br />
+        Website: [Webadresse]
+      </p>
+
+      <h2>Vertretungsberechtigte Person</h2>
+
+      <p>
+        [Name der verantwortlichen Person]
+      </p>
+
+      <h2>Unternehmensangaben</h2>
+
+      <p>
+        UID / CHE-Nummer: [CHE-Nummer]
+      </p>
+
+      <h2>Haftungsausschluss</h2>
+
+      <p>
+        Die Inhalte dieser Website wurden mit grösstmöglicher
+        Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit
+        und Aktualität der Inhalte kann jedoch keine Gewähr
+        übernommen werden.
+      </p>
+
+      <p>
+        Für Inhalte externer Websites, auf die durch Links
+        verwiesen wird, übernehmen wir keine Verantwortung.
+      </p>
+
+    </LegalPage>
+  )
 }
