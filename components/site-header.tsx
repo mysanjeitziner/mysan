@@ -7,23 +7,51 @@ import { useState } from 'react'
 const MYSAN_BLUE = '#1dabff'
 
 const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '/news', label: 'News' },
-  { href: '/referenzen', label: 'Referenzen' },
-  { href: '/team', label: 'Team' },
-  { href: '/kontakt', label: 'Kontakt' },
+  {
+    href: '/',
+    label: 'Home',
+  },
+  {
+    href: '/dienstleistungen',
+    label: 'Dienstleistungen',
+  },
+  {
+    href: '/news',
+    label: 'News',
+  },
+  {
+    href: '/referenzen',
+    label: 'Referenzen',
+  },
+  {
+    href: '/team',
+    label: 'Team',
+  },
+  {
+    href: '/kontakt',
+    label: 'Kontakt',
+  },
 ]
 
 export default function SiteHeader() {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
 
+  /*
+   * =========================================================
+   * AKTIVER MENÜPUNKT
+   * =========================================================
+   */
+
   function isActive(href: string) {
     if (href === '/') {
       return pathname === '/'
     }
 
-    return pathname === href || pathname.startsWith(`${href}/`)
+    return (
+      pathname === href ||
+      pathname.startsWith(`${href}/`)
+    )
   }
 
   return (
@@ -34,7 +62,9 @@ export default function SiteHeader() {
 
       <div
         className="fixed left-0 top-0 z-[100] hidden h-screen w-2 md:block"
-        style={{ backgroundColor: MYSAN_BLUE }}
+        style={{
+          backgroundColor: MYSAN_BLUE,
+        }}
       />
 
       {/* =====================================================
@@ -45,7 +75,9 @@ export default function SiteHeader() {
         <div className="mx-auto max-w-7xl px-6 md:px-10">
           <div className="flex h-24 items-center justify-between">
 
-            {/* LOGO */}
+            {/* =================================================
+                LOGO
+            ================================================= */}
 
             <Link
               href="/"
@@ -72,9 +104,17 @@ export default function SiteHeader() {
                     key={item.href}
                     href={item.href}
                     className={`
-                      group relative flex h-12 items-center
-                      gap-3 px-4 text-sm font-medium
-                      transition-all duration-200
+                      group
+                      relative
+                      flex
+                      h-12
+                      items-center
+                      gap-3
+                      px-4
+                      text-sm
+                      font-medium
+                      transition-all
+                      duration-200
                       ${
                         active
                           ? 'text-[#1dabff]'
@@ -82,29 +122,43 @@ export default function SiteHeader() {
                       }
                     `}
                   >
-                    {/* LINKER STRICH */}
+
+                    {/* =========================================
+                        LINKER STRICH
+                    ========================================= */}
 
                     <span
                       className={`
-                        absolute left-0 top-1/2
-                        h-6 w-0.5
+                        absolute
+                        left-0
+                        top-1/2
+                        h-6
+                        w-0.5
                         -translate-y-1/2
-                        transition-all duration-200
+                        transition-all
+                        duration-200
                         ${
                           active
                             ? 'bg-[#1dabff]'
-                            : 'bg-transparent group-hover:bg-[#1dabff]'
+                            : 'bg-neutral-300 group-hover:bg-[#1dabff]'
                         }
                       `}
                     />
 
-                    {/* WASSERTROPFEN */}
+                    {/* =========================================
+                        WASSERTROPFEN
+                    ========================================= */}
 
                     <span
                       className={`
-                        flex h-4 w-4 shrink-0
-                        items-center justify-center
-                        transition-all duration-200
+                        flex
+                        h-4
+                        w-4
+                        shrink-0
+                        items-center
+                        justify-center
+                        transition-all
+                        duration-200
                         ${
                           active
                             ? 'text-[#1dabff]'
@@ -123,6 +177,7 @@ export default function SiteHeader() {
                     </span>
 
                     {item.label}
+
                   </Link>
                 )
               })}
@@ -135,47 +190,94 @@ export default function SiteHeader() {
             <button
               type="button"
               aria-label={
-                menuOpen ? 'Menü schliessen' : 'Menü öffnen'
+                menuOpen
+                  ? 'Menü schliessen'
+                  : 'Menü öffnen'
               }
               aria-expanded={menuOpen}
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() =>
+                setMenuOpen(!menuOpen)
+              }
               className="
-                relative flex h-11 w-11 items-center
-                justify-center rounded-full text-white
-                transition-transform duration-200
-                hover:scale-105 lg:hidden
+                relative
+                flex
+                h-11
+                w-11
+                items-center
+                justify-center
+                rounded-full
+                text-white
+                transition-transform
+                duration-200
+                hover:scale-105
+                lg:hidden
               "
-              style={{ backgroundColor: MYSAN_BLUE }}
+              style={{
+                backgroundColor: MYSAN_BLUE,
+              }}
             >
               <div className="relative h-5 w-6">
 
-                <span
-                  className={`
-                    absolute left-0 h-0.5 w-6 bg-white
-                    transition-all duration-300
-                    ${menuOpen ? 'top-2 rotate-45' : 'top-0'}
-                  `}
-                />
+                {/* Obere Linie */}
 
                 <span
                   className={`
-                    absolute left-0 top-2 h-0.5 w-6 bg-white
-                    transition-all duration-300
-                    ${menuOpen ? 'opacity-0' : 'opacity-100'}
+                    absolute
+                    left-0
+                    h-0.5
+                    w-6
+                    bg-white
+                    transition-all
+                    duration-300
+                    ${
+                      menuOpen
+                        ? 'top-2 rotate-45'
+                        : 'top-0'
+                    }
                   `}
                 />
 
+                {/* Mittlere Linie */}
+
                 <span
                   className={`
-                    absolute left-0 h-0.5 w-6 bg-white
-                    transition-all duration-300
-                    ${menuOpen ? 'top-2 -rotate-45' : 'top-4'}
+                    absolute
+                    left-0
+                    top-2
+                    h-0.5
+                    w-6
+                    bg-white
+                    transition-all
+                    duration-300
+                    ${
+                      menuOpen
+                        ? 'opacity-0'
+                        : 'opacity-100'
+                    }
+                  `}
+                />
+
+                {/* Untere Linie */}
+
+                <span
+                  className={`
+                    absolute
+                    left-0
+                    h-0.5
+                    w-6
+                    bg-white
+                    transition-all
+                    duration-300
+                    ${
+                      menuOpen
+                        ? 'top-2 -rotate-45'
+                        : 'top-4'
+                    }
                   `}
                 />
 
               </div>
             </button>
-
           </div>
         </div>
       </header>
@@ -186,8 +288,13 @@ export default function SiteHeader() {
 
       <div
         className={`
-          fixed inset-0 z-40 bg-white
-          transition-all duration-300 lg:hidden
+          fixed
+          inset-0
+          z-40
+          bg-white
+          transition-all
+          duration-300
+          lg:hidden
           ${
             menuOpen
               ? 'visible opacity-100'
@@ -200,14 +307,19 @@ export default function SiteHeader() {
 
         <div
           className="absolute left-0 top-0 h-full w-2"
-          style={{ backgroundColor: MYSAN_BLUE }}
+          style={{
+            backgroundColor: MYSAN_BLUE,
+          }}
         />
 
         <div className="flex min-h-full flex-col px-8 pb-8 pt-32">
 
-          {/* MOBILE NAVIGATION */}
+          {/* =================================================
+              MOBILE NAVIGATION
+          ================================================= */}
 
           <nav className="flex flex-col">
+
             {navItems.map((item) => {
               const active = isActive(item.href)
 
@@ -215,12 +327,22 @@ export default function SiteHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() =>
+                    setMenuOpen(false)
+                  }
                   className={`
-                    group relative flex items-center
-                    border-b border-neutral-200
-                    py-5 pl-8 text-2xl font-light
-                    transition-all duration-200
+                    group
+                    relative
+                    flex
+                    items-center
+                    border-b
+                    border-neutral-200
+                    py-5
+                    pl-8
+                    text-2xl
+                    font-light
+                    transition-all
+                    duration-200
                     ${
                       active
                         ? 'text-[#1dabff]'
@@ -228,29 +350,44 @@ export default function SiteHeader() {
                     }
                   `}
                 >
-                  {/* LINKER STRICH */}
+
+                  {/* =========================================
+                      LINKER STRICH
+                  ========================================= */}
 
                   <span
                     className={`
-                      absolute left-0 top-1/2
-                      h-8 w-0.5
+                      absolute
+                      left-0
+                      top-1/2
+                      h-8
+                      w-0.5
                       -translate-y-1/2
-                      transition-all duration-200
+                      transition-all
+                      duration-200
                       ${
                         active
                           ? 'bg-[#1dabff]'
-                          : 'bg-transparent group-hover:bg-[#1dabff]'
+                          : 'bg-neutral-300 group-hover:bg-[#1dabff]'
                       }
                     `}
                   />
 
-                  {/* WASSERTROPFEN */}
+                  {/* =========================================
+                      WASSERTROPFEN
+                  ========================================= */}
 
                   <span
                     className={`
-                      mr-5 flex h-5 w-5 shrink-0
-                      items-center justify-center
-                      transition-all duration-200
+                      mr-5
+                      flex
+                      h-5
+                      w-5
+                      shrink-0
+                      items-center
+                      justify-center
+                      transition-all
+                      duration-200
                       ${
                         active
                           ? 'scale-110 text-[#1dabff]'
@@ -269,19 +406,26 @@ export default function SiteHeader() {
                   </span>
 
                   {item.label}
+
                 </Link>
               )
             })}
+
           </nav>
 
-          {/* MOBILE FOOTER */}
+          {/* =================================================
+              MOBILE FOOTER
+          ================================================= */}
 
           <div className="mt-auto pt-8">
+
             <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-neutral-400">
 
               <Link
                 href="/impressum"
-                onClick={() => setMenuOpen(false)}
+                onClick={() =>
+                  setMenuOpen(false)
+                }
                 className="transition-colors hover:text-[#1dabff]"
               >
                 Impressum
@@ -289,7 +433,9 @@ export default function SiteHeader() {
 
               <Link
                 href="/datenschutz"
-                onClick={() => setMenuOpen(false)}
+                onClick={() =>
+                  setMenuOpen(false)
+                }
                 className="transition-colors hover:text-[#1dabff]"
               >
                 Datenschutz
@@ -297,13 +443,16 @@ export default function SiteHeader() {
 
               <Link
                 href="/cookies"
-                onClick={() => setMenuOpen(false)}
+                onClick={() =>
+                  setMenuOpen(false)
+                }
                 className="transition-colors hover:text-[#1dabff]"
               >
                 Cookies
               </Link>
 
             </div>
+
           </div>
 
         </div>
