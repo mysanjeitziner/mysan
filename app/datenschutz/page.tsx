@@ -1,88 +1,81 @@
-import LegalPage from '@/components/legal-page'
+import PageHero from '@/components/page-hero'
 
 export default function DatenschutzPage() {
-  return (
-    <LegalPage
-      label="Rechtliches"
-      title="Datenschutz"
-    >
+return ( <main> <PageHero
+     eyebrow="Rechtliches"
+     title="Datenschutz"
+     description="Informationen zum Umgang mit Ihren personenbezogenen Daten."
+   />
 
-      <h2>1. Allgemeine Hinweise</h2>
 
-      <p>
-        Der Schutz Ihrer persönlichen Daten ist uns wichtig.
-        Wir behandeln Ihre personenbezogenen Daten vertraulich
-        und entsprechend den geltenden datenschutzrechtlichen
-        Bestimmungen der Schweiz.
-      </p>
+  <section className="relative overflow-hidden">
+    <div className="absolute left-0 top-0 h-full w-2 bg-[#1dabff]" />
 
-      <h2>2. Verantwortliche Stelle</h2>
+    <div className="mx-auto max-w-4xl px-8 py-20 md:px-12 md:py-28 lg:px-16">
+      <div className="prose prose-neutral max-w-none">
+        <h2>1. Allgemeine Hinweise</h2>
 
-      <p>
-        <strong>mySan Jeitziner</strong>
-        <br />
-        Sanitär und Heizung
-        <br />
-        Wallis, Schweiz
-        <br />
-        E-Mail: [E-Mail-Adresse]
-      </p>
+        <p>
+          Der Schutz Ihrer persönlichen Daten ist uns wichtig. Diese
+          Datenschutzerklärung informiert Sie darüber, welche
+          personenbezogenen Daten beim Besuch unserer Website erhoben,
+          verarbeitet und verwendet werden.
+        </p>
 
-      <h2>3. Erhebung und Verarbeitung personenbezogener Daten</h2>
+        <h2>2. Verantwortliche Stelle</h2>
 
-      <p>
-        Personenbezogene Daten werden nur erhoben, wenn Sie uns
-        diese freiwillig mitteilen oder wenn dies für die
-        Bereitstellung unserer Dienstleistungen erforderlich ist.
-      </p>
+        <p>
+          Mysan Jeitziner<br />
+          Sanitär und Heizung<br />
+          Wallis, Schweiz
+        </p>
 
-      <p>
-        Dies kann insbesondere bei einer Kontaktaufnahme per
-        E-Mail, Telefon oder über ein Kontaktformular der Fall sein.
-      </p>
+        <h2>3. Erhebung und Verarbeitung personenbezogener Daten</h2>
 
-      <h2>4. Kontaktformular</h2>
+        <p>
+          Beim Besuch unserer Website können technische Daten wie
+          IP-Adresse, Datum und Uhrzeit des Zugriffs, verwendeter Browser
+          sowie aufgerufene Seiten verarbeitet werden. Diese Daten dienen
+          insbesondere der technischen Bereitstellung und Sicherheit
+          unserer Website.
+        </p>
 
-      <p>
-        Wenn Sie uns über das Kontaktformular kontaktieren,
-        werden die von Ihnen eingegebenen Angaben zur Bearbeitung
-        Ihrer Anfrage verwendet.
-      </p>
+        <h2>4. Kontaktaufnahme</h2>
 
-      <h2>5. Server- und Zugriffsdaten</h2>
+        <p>
+          Wenn Sie uns über das Kontaktformular, per E-Mail oder auf
+          anderem Weg kontaktieren, verarbeiten wir die von Ihnen
+          übermittelten Angaben zur Bearbeitung Ihrer Anfrage.
+        </p>
 
-      <p>
-        Beim Besuch unserer Website können technische Daten
-        automatisch erfasst werden. Dazu können insbesondere
-        IP-Adresse, Datum und Uhrzeit des Zugriffs, Browsertyp,
-        Betriebssystem und aufgerufene Seiten gehören.
-      </p>
+        <h2>5. Cookies</h2>
 
-      <h2>6. Drittanbieter und Dienste</h2>
+        <p>
+          Unsere Website kann Cookies und ähnliche Technologien verwenden.
+          Weitere Informationen finden Sie auf unserer Seite
+          <a href="/cookies"> Cookies</a>.
+        </p>
 
-      <p>
-        Für den Betrieb unserer Website können technische
-        Dienstleister eingesetzt werden. Dabei kann es zur
-        Verarbeitung personenbezogener Daten kommen.
-      </p>
+        <h2>6. Ihre Rechte</h2>
 
-      <h2>7. Ihre Rechte</h2>
+        <p>
+          Im Rahmen der geltenden gesetzlichen Bestimmungen haben Sie
+          insbesondere das Recht auf Auskunft, Berichtigung, Löschung und
+          Einschränkung der Verarbeitung Ihrer personenbezogenen Daten.
+        </p>
 
-      <p>
-        Im Rahmen der gesetzlichen Bestimmungen haben Sie das
-        Recht, Auskunft über Ihre personenbezogenen Daten zu
-        verlangen und gegebenenfalls deren Berichtigung oder
-        Löschung zu verlangen.
-      </p>
+        <h2>7. Änderungen</h2>
 
-      <h2>8. Aktualisierung</h2>
+        <p>
+          Wir können diese Datenschutzerklärung bei Bedarf anpassen. Es
+          gilt jeweils die auf dieser Website veröffentlichte aktuelle
+          Fassung.
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
 
-      <p>
-        Wir können diese Datenschutzerklärung jederzeit anpassen,
-        wenn sich gesetzliche Anforderungen oder die von uns
-        eingesetzten Dienste ändern.
-      </p>
 
-    </LegalPage>
-  )
+)
 }
