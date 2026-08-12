@@ -1,8 +1,8 @@
-
 import type { Metadata } from 'next'
 import './globals.css'
 
 import SiteHeader from '@/components/site-header'
+import SiteFooter from '@/components/site-footer'
 import CookieBanner from '@/components/cookie-banner'
 
 export const metadata: Metadata = {
@@ -18,11 +18,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body>
+      <body className="min-h-screen bg-white">
 
         <SiteHeader />
 
-        {children}
+        <main>
+          {children}
+        </main>
+
+        <SiteFooter />
 
         <CookieBanner />
 
