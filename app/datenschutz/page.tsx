@@ -1,7 +1,365 @@
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 
 const MYSAN_BLUE = '#1dabff'
 
-export default function DatenschutzPage() {
+type SiteContent = {
+  section: string
+  content_key: string
+  content: string
+  visible: boolean
+  sort_order?: number
+}
+
+export default async function DatenschutzPage() {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('site_content')
+    .select(
+      'section, content_key, content, visible, sort_order'
+    )
+    .eq('page', 'datenschutz')
+    .order('sort_order', {
+      ascending: true,
+    })
+
+  const contents = (data as SiteContent[] | null) || []
+
+  /*
+  =========================================================
+  INHALT HOLEN
+
+  Wenn visible = false:
+  → Inhalt wird NICHT zurückgegeben
+
+  Wenn kein Eintrag vorhanden ist:
+  → Fallback wird verwendet
+
+  WICHTIG:
+  Ein vorhandener Eintrag mit visible = false
+  darf NICHT auf den Fallback zurückfallen.
+  =========================================================
+  */
+
+  function getContent(
+    section: string,
+    key: string,
+    fallback: string
+  ): string | null {
+    const item = contents.find(
+      (content) =>
+        content.section === section &&
+        content.content_key === key
+    )
+
+    // Kein Eintrag in der Datenbank
+    if (!item) {
+      return fallback
+    }
+
+    // Eintrag existiert, ist aber deaktiviert
+    if (item.visible === false) {
+      return null
+    }
+
+    return item.content
+  }
+
+  /*
+  =========================================================
+  HERO
+  =========================================================
+  */
+
+  const heroEyebrow = getContent(
+    'hero',
+    'eyebrow',
+    'Rechtliche Angaben'
+  )
+
+  const heroTitle = getContent(
+    'hero',
+    'title',
+    'Datenschutz'
+  )
+
+  const heroSubtitle = getContent(
+    'hero',
+    'subtitle',
+    'Ihre Daten. Unser Umgang.'
+  )
+
+  /*
+  =========================================================
+  SEKTIONEN
+  =========================================================
+  */
+
+  const sections = [
+    {
+      section: 'allgemein',
+      eyebrow: 'Datenschutz',
+      title: 'Allgemeine Hinweise.',
+      paragraphs: [
+        getContent(
+          'allgemein',
+          'text_1',
+          'Der Schutz Ihrer persönlichen Daten ist uns wichtig. Diese Datenschutzerklärung informiert Sie darüber, welche personenbezogenen Daten beim Besuch unserer Website bearbeitet werden und zu welchen Zwecken dies erfolgt.'
+        ),
+        getContent(
+          'allgemein',
+          'text_2',
+          'Die Bearbeitung personenbezogener Daten erfolgt im Rahmen der geltenden gesetzlichen Bestimmungen, insbesondere des Schweizer Datenschutzgesetzes (DSG).'
+        ),
+      ],
+    },
+
+    {
+      section: 'verantwortlich',
+      eyebrow: 'Verantwortlich',
+      title: 'Verantwortliche Stelle.',
+      paragraphs: [
+        getContent(
+          'verantwortlich',
+          'text_1',
+          'mySan Jeitziner GmbH\nKrydenweg 86\n3900 Gamsen\nSchweiz\n\nTelefon: 079 590 09 60\nBüro: 079 217 25 71\nE-Mail: info@mysan.ch'
+        ),
+      ],
+    },
+
+    {
+      section: 'website',
+      eyebrow: 'Website',
+      title: 'Besuch unserer Website.',
+      paragraphs: [
+        getContent(
+          'website',
+          'text_1',
+          'Beim Besuch unserer Website können technische Daten automatisch erfasst werden. Dazu können insbesondere IP-Adresse, Datum und Uhrzeit des Zugriffs, verwendeter Browser, Betriebssystem sowie technische Informationen über das verwendete Gerät gehören.'
+        ),
+        getContent(
+          'website',
+          'text_2',
+          'Diese Daten können erforderlich sein, damit die Website technisch sicher und zuverlässig betrieben werden kann.'
+        ),
+      ],
+    },
+
+    {
+      section: 'kontaktformular',
+      eyebrow: 'Kontakt',
+      title: 'Kontaktformular.',
+      paragraphs: [
+        getContent(
+          'kontaktformular',
+          'text_1',
+          'Wenn Sie uns über das Kontaktformular kontaktieren, bearbeiten wir die von Ihnen übermittelten Angaben, insbesondere Name, Vorname, Adresse, E-Mail-Adresse und Nachricht.'
+        ),
+        getContent(
+          'kontaktformular',
+          'text_2',
+          'Diese Daten werden verwendet, um Ihre Anfrage zu bearbeiten und mit Ihnen Kontakt aufzunehmen.'
+        ),
+        getContent(
+          'kontaktformular',
+          'text_3',
+          'Die Angabe der mit einem Sternchen gekennzeichneten Felder ist erforderlich, damit wir Ihre Anfrage bearbeiten können.'
+        ),
+      ],
+    },
+
+    {
+      section: 'resend',
+      eyebrow: 'E-Mail',
+      title: 'Versand über Resend.',
+      paragraphs: [
+        getContent(
+          'resend',
+          'text_1',
+          'Für den Versand von Nachrichten aus unserem Kontaktformular verwenden wir den Dienst Resend.'
+        ),
+        getContent(
+          'resend',
+          'text_2',
+          'Die über das Kontaktformular eingegebenen Daten werden verarbeitet, soweit dies für die Übermittlung und Bearbeitung Ihrer Anfrage erforderlich ist.'
+        ),
+        getContent(
+          'resend',
+          'text_3',
+          'Dabei können personenbezogene Daten an Resend bzw. dessen technische Dienstleister übermittelt werden. Die Bearbeitung erfolgt im Rahmen der jeweiligen Datenschutzbestimmungen des Dienstleisters.'
+        ),
+      ],
+    },
+
+    {
+      section: 'supabase',
+      eyebrow: 'Datenbank',
+      title: 'Verwendung von Supabase.',
+      paragraphs: [
+        getContent(
+          'supabase',
+          'text_1',
+          'Für die Speicherung und Verarbeitung bestimmter Daten unserer Website verwenden wir Supabase.'
+        ),
+        getContent(
+          'supabase',
+          'text_2',
+          'Supabase stellt unter anderem Datenbank-, Speicher- und Authentifizierungsfunktionen zur Verfügung.'
+        ),
+        getContent(
+          'supabase',
+          'text_3',
+          'Im Rahmen der Nutzung von Funktionen unserer Website können personenbezogene Daten verarbeitet und gespeichert werden, soweit dies für den Betrieb der Website und die angebotenen Funktionen erforderlich ist.'
+        ),
+      ],
+    },
+
+    {
+      section: 'admin',
+      eyebrow: 'Administration',
+      title: 'Login und Benutzerkonten.',
+      paragraphs: [
+        getContent(
+          'admin',
+          'text_1',
+          'Der geschützte Administrationsbereich unserer Website verwendet eine Authentifizierung. Dabei können insbesondere E-Mail-Adresse und technische Authentifizierungsdaten verarbeitet werden.'
+        ),
+        getContent(
+          'admin',
+          'text_2',
+          'Der Administrationsbereich ist nicht für die öffentliche Nutzung bestimmt.'
+        ),
+      ],
+    },
+
+    {
+      section: 'google_maps',
+      eyebrow: 'Standort',
+      title: 'Google Maps.',
+      paragraphs: [
+        getContent(
+          'google_maps',
+          'text_1',
+          'Auf unserer Kontaktseite verwenden wir Google Maps zur Darstellung unseres Standorts.'
+        ),
+        getContent(
+          'google_maps',
+          'text_2',
+          'Beim Aufruf der Karte können technische Daten an Google übermittelt werden. Dazu können insbesondere IP-Adresse, Informationen über das verwendete Gerät sowie weitere technische Daten gehören.'
+        ),
+        getContent(
+          'google_maps',
+          'text_3',
+          'Die Nutzung von Google Maps erfolgt, um unseren Standort übersichtlich darzustellen und Ihnen die Anfahrt zu erleichtern.'
+        ),
+      ],
+    },
+
+    {
+      section: 'social_media',
+      eyebrow: 'Social Media',
+      title: 'Instagram.',
+      paragraphs: [
+        getContent(
+          'social_media',
+          'text_1',
+          'Auf unserer Website kann ein Link zu unserem Instagram-Auftritt enthalten sein.'
+        ),
+        getContent(
+          'social_media',
+          'text_2',
+          'Wenn Sie den entsprechenden Link aufrufen, verlassen Sie unsere Website und gelangen zum Angebot von Instagram. Für die anschliessende Bearbeitung personenbezogener Daten ist der jeweilige Betreiber der Plattform verantwortlich.'
+        ),
+      ],
+    },
+
+    {
+      section: 'cookies',
+      eyebrow: 'Cookies',
+      title: 'Verwendung von Cookies.',
+      paragraphs: [
+        getContent(
+          'cookies',
+          'text_1',
+          'Unsere Website kann technisch notwendige Cookies oder vergleichbare Technologien verwenden, die für den Betrieb der Website und bestimmte Funktionen erforderlich sind.'
+        ),
+        getContent(
+          'cookies',
+          'text_2',
+          'Soweit Cookies oder vergleichbare Technologien eingesetzt werden, die nicht technisch erforderlich sind, informieren wir darüber und holen – soweit gesetzlich erforderlich – Ihre Einwilligung ein.'
+        ),
+      ],
+    },
+
+    {
+      section: 'analyse',
+      eyebrow: 'Analyse',
+      title: 'Keine Besucheranalyse.',
+      paragraphs: [
+        getContent(
+          'analyse',
+          'text_1',
+          'Auf unserer Website wird derzeit kein Google Analytics und kein vergleichbarer Dienst zur Erstellung von Besucherprofilen oder zur Analyse des Nutzungsverhaltens eingesetzt.'
+        ),
+      ],
+    },
+
+    {
+      section: 'rechte',
+      eyebrow: 'Ihre Rechte',
+      title: 'Rechte der betroffenen Personen.',
+      paragraphs: [
+        getContent(
+          'rechte',
+          'text_1',
+          'Im Rahmen des anwendbaren Datenschutzrechts haben Sie insbesondere das Recht, Auskunft über Ihre bearbeiteten personenbezogenen Daten zu verlangen.'
+        ),
+        getContent(
+          'rechte',
+          'text_2',
+          'Je nach den gesetzlichen Voraussetzungen können Sie zudem die Berichtigung, Löschung oder Einschränkung der Bearbeitung Ihrer personenbezogenen Daten verlangen.'
+        ),
+        getContent(
+          'rechte',
+          'text_3',
+          'Für entsprechende Anliegen können Sie uns über die oben angegebenen Kontaktdaten erreichen.'
+        ),
+      ],
+    },
+
+    {
+      section: 'sicherheit',
+      eyebrow: 'Sicherheit',
+      title: 'Schutz Ihrer Daten.',
+      paragraphs: [
+        getContent(
+          'sicherheit',
+          'text_1',
+          'Wir treffen angemessene technische und organisatorische Massnahmen, um personenbezogene Daten vor Verlust, Missbrauch, unberechtigtem Zugriff oder unbefugter Offenlegung zu schützen.'
+        ),
+      ],
+    },
+
+    {
+      section: 'aktualisierung',
+      eyebrow: 'Aktualisierung',
+      title: 'Änderungen dieser Datenschutzerklärung.',
+      paragraphs: [
+        getContent(
+          'aktualisierung',
+          'text_1',
+          'Wir können diese Datenschutzerklärung jederzeit anpassen, wenn sich gesetzliche Anforderungen oder die von uns eingesetzten Dienste und Funktionen ändern.'
+        ),
+        getContent(
+          'aktualisierung',
+          'text_2',
+          'Es gilt jeweils die auf dieser Website veröffentlichte aktuelle Fassung.'
+        ),
+      ],
+    },
+  ]
+
   return (
     <main className="min-h-screen bg-white text-neutral-900">
 
@@ -10,8 +368,6 @@ export default function DatenschutzPage() {
       ===================================================== */}
 
       <section className="relative overflow-hidden bg-white">
-
-        {/* Blauer linker Rand */}
 
         <div
           className="absolute left-0 top-0 z-30 h-full w-2"
@@ -24,43 +380,45 @@ export default function DatenschutzPage() {
 
           <div className="max-w-4xl">
 
-            {/* Blauer Strich */}
+            {heroEyebrow && (
+              <>
+                <div
+                  className="mb-5 h-1 w-14"
+                  style={{
+                    backgroundColor: MYSAN_BLUE,
+                  }}
+                />
 
-            <div
-              className="mb-5 h-1 w-14"
-              style={{
-                backgroundColor: MYSAN_BLUE,
-              }}
-            />
+                <p
+                  className="text-xs font-semibold uppercase tracking-[0.25em]"
+                  style={{
+                    color: MYSAN_BLUE,
+                  }}
+                >
+                  {heroEyebrow}
+                </p>
+              </>
+            )}
 
-            {/* Eyebrow */}
+            {heroTitle && (
+              <h1 className="mt-4 text-5xl font-light leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
+                {heroTitle}
 
-            <p
-              className="text-xs font-semibold uppercase tracking-[0.25em]"
-              style={{
-                color: MYSAN_BLUE,
-              }}
-            >
-              Rechtliche Angaben
-            </p>
+                {heroSubtitle && (
+                  <>
+                    <br />
 
-            {/* Titel */}
-
-            <h1 className="mt-4 text-5xl font-light leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
-
-              Datenschutz
-
-              <br />
-
-              <span
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Ihre Daten. Unser Umgang.
-              </span>
-
-            </h1>
+                    <span
+                      style={{
+                        color: MYSAN_BLUE,
+                      }}
+                    >
+                      {heroSubtitle}
+                    </span>
+                  </>
+                )}
+              </h1>
+            )}
 
           </div>
 
@@ -75,8 +433,6 @@ export default function DatenschutzPage() {
 
       <section className="relative overflow-hidden bg-white">
 
-        {/* Blauer linker Rand */}
-
         <div
           className="absolute left-0 top-0 h-full w-2"
           style={{
@@ -88,604 +444,127 @@ export default function DatenschutzPage() {
 
           <div className="max-w-4xl">
 
-            {/* =================================================
-                1. ALLGEMEINE HINWEISE
-            ================================================= */}
+            {sections.map((section) => {
 
-            <section className="border-t border-neutral-200 pt-10">
+              /*
+              =================================================
+              NUR SICHTBARE ABSÄTZE
+              =================================================
+              */
 
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Datenschutz
-              </p>
+              const visibleParagraphs =
+                section.paragraphs.filter(
+                  (paragraph): paragraph is string =>
+                    paragraph !== null &&
+                    paragraph.trim() !== ''
+                )
 
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Allgemeine Hinweise.
-              </h2>
+              /*
+              =================================================
+              WENN ALLE TEXTE UNSICHTBAR SIND:
 
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
+              → komplette Section wird nicht angezeigt
+              =================================================
+              */
 
-                <p>
-                  Der Schutz Ihrer persönlichen Daten ist uns wichtig.
-                  Diese Datenschutzerklärung informiert Sie darüber, welche
-                  personenbezogenen Daten beim Besuch unserer Website
-                  bearbeitet werden und zu welchen Zwecken dies erfolgt.
-                </p>
+              if (visibleParagraphs.length === 0) {
+                return null
+              }
 
-                <p>
-                  Die Bearbeitung personenbezogener Daten erfolgt im Rahmen
-                  der geltenden gesetzlichen Bestimmungen, insbesondere des
-                  Schweizer Datenschutzgesetzes (DSG).
-                </p>
+              return (
+                <section
+                  key={section.section}
+                  className="border-t border-neutral-200 pt-10 first:border-t"
+                >
 
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                2. VERANTWORTLICHE STELLE
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Verantwortlich
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Verantwortliche Stelle.
-              </h2>
-
-              <div className="mt-7 space-y-1 text-base leading-7 text-neutral-700">
-
-                <p className="font-medium text-neutral-900">
-                  mySan Jeitziner GmbH
-                </p>
-
-                <p>Krydenweg 86</p>
-
-                <p>3900 Gamsen</p>
-
-                <p>Schweiz</p>
-
-                <p className="pt-3">
-                  Telefon: 079 590 09 60
-                </p>
-
-                <p>
-                  Büro: 079 217 25 71
-                </p>
-
-                <p>
-                  E-Mail:{' '}
-                  <a
-                    href="mailto:info@mysan.ch"
-                    className="transition-colors hover:text-[#1dabff]"
+                  <p
+                    className="text-xs font-semibold uppercase tracking-[0.2em]"
+                    style={{
+                      color: MYSAN_BLUE,
+                    }}
                   >
-                    info@mysan.ch
-                  </a>
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                3. BESUCH DER WEBSITE
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Website
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Besuch unserer Website.
-              </h2>
-
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Beim Besuch unserer Website können technische Daten
-                  automatisch erfasst werden. Dazu können insbesondere
-                  IP-Adresse, Datum und Uhrzeit des Zugriffs, verwendeter
-                  Browser, Betriebssystem sowie technische Informationen
-                  über das verwendete Gerät gehören.
-                </p>
-
-                <p>
-                  Diese Daten können erforderlich sein, damit die Website
-                  technisch sicher und zuverlässig betrieben werden kann.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                4. KONTAKTFORMULAR
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Kontakt
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Kontaktformular.
-              </h2>
-
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Wenn Sie uns über das Kontaktformular kontaktieren,
-                  bearbeiten wir die von Ihnen übermittelten Angaben,
-                  insbesondere Name, Vorname, Adresse, E-Mail-Adresse und
-                  Nachricht.
-                </p>
-
-                <p>
-                  Diese Daten werden verwendet, um Ihre Anfrage zu bearbeiten
-                  und mit Ihnen Kontakt aufzunehmen.
-                </p>
-
-                <p>
-                  Die Angabe der mit einem Sternchen gekennzeichneten Felder
-                  ist erforderlich, damit wir Ihre Anfrage bearbeiten können.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                5. RESEND
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                E-Mail
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Versand über Resend.
-              </h2>
-
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Für den Versand von Nachrichten aus unserem
-                  Kontaktformular verwenden wir den Dienst Resend.
-                </p>
-
-                <p>
-                  Die über das Kontaktformular eingegebenen Daten werden
-                  verarbeitet, soweit dies für die Übermittlung und
-                  Bearbeitung Ihrer Anfrage erforderlich ist.
-                </p>
-
-                <p>
-                  Dabei können personenbezogene Daten an Resend bzw. dessen
-                  technische Dienstleister übermittelt werden. Die
-                  Bearbeitung erfolgt im Rahmen der jeweiligen
-                  Datenschutzbestimmungen des Dienstleisters.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                6. SUPABASE
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Datenbank
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Verwendung von Supabase.
-              </h2>
-
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Für die Speicherung und Verarbeitung bestimmter Daten
-                  unserer Website verwenden wir Supabase.
-                </p>
-
-                <p>
-                  Supabase stellt unter anderem Datenbank-, Speicher- und
-                  Authentifizierungsfunktionen zur Verfügung.
-                </p>
-
-                <p>
-                  Im Rahmen der Nutzung von Funktionen unserer Website können
-                  personenbezogene Daten verarbeitet und gespeichert werden,
-                  soweit dies für den Betrieb der Website und die angebotenen
-                  Funktionen erforderlich ist.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                7. ADMIN-BEREICH
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Administration
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Login und Benutzerkonten.
-              </h2>
-
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Der geschützte Administrationsbereich unserer Website
-                  verwendet eine Authentifizierung. Dabei können
-                  insbesondere E-Mail-Adresse und technische
-                  Authentifizierungsdaten verarbeitet werden.
-                </p>
-
-                <p>
-                  Der Administrationsbereich ist nicht für die öffentliche
-                  Nutzung bestimmt.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                8. GOOGLE MAPS
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Standort
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Google Maps.
-              </h2>
-
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Auf unserer Kontaktseite verwenden wir Google Maps zur
-                  Darstellung unseres Standorts.
-                </p>
-
-                <p>
-                  Beim Aufruf der Karte können technische Daten an Google
-                  übermittelt werden. Dazu können insbesondere IP-Adresse,
-                  Informationen über das verwendete Gerät sowie weitere
-                  technische Daten gehören.
-                </p>
-
-                <p>
-                  Die Nutzung von Google Maps erfolgt, um unseren Standort
-                  übersichtlich darzustellen und Ihnen die Anfahrt zu
-                  erleichtern.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                9. SOCIAL MEDIA
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Social Media
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Instagram.
-              </h2>
-
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Auf unserer Website kann ein Link zu unserem
-                  Instagram-Auftritt enthalten sein.
-                </p>
-
-                <p>
-                  Wenn Sie den entsprechenden Link aufrufen, verlassen Sie
-                  unsere Website und gelangen zum Angebot von Instagram.
-                  Für die anschliessende Bearbeitung personenbezogener Daten
-                  ist der jeweilige Betreiber der Plattform verantwortlich.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                10. COOKIES
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Cookies
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Verwendung von Cookies.
-              </h2>
-
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Unsere Website kann technisch notwendige Cookies oder
-                  vergleichbare Technologien verwenden, die für den Betrieb
-                  der Website und bestimmte Funktionen erforderlich sind.
-                </p>
-
-                <p>
-                  Soweit Cookies oder vergleichbare Technologien eingesetzt
-                  werden, die nicht technisch erforderlich sind, informieren
-                  wir darüber und holen – soweit gesetzlich erforderlich –
-                  Ihre Einwilligung ein.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                11. KEIN GOOGLE ANALYTICS
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Analyse
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Keine Besucheranalyse.
-              </h2>
-
-              <div className="mt-7 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Auf unserer Website wird derzeit kein Google Analytics und
-                  kein vergleichbarer Dienst zur Erstellung von
-                  Besucherprofilen oder zur Analyse des Nutzungsverhaltens
-                  eingesetzt.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                12. IHRE RECHTE
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Ihre Rechte
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Rechte der betroffenen Personen.
-              </h2>
-
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Im Rahmen des anwendbaren Datenschutzrechts haben Sie
-                  insbesondere das Recht, Auskunft über Ihre bearbeiteten
-                  personenbezogenen Daten zu verlangen.
-                </p>
-
-                <p>
-                  Je nach den gesetzlichen Voraussetzungen können Sie zudem
-                  die Berichtigung, Löschung oder Einschränkung der
-                  Bearbeitung Ihrer personenbezogenen Daten verlangen.
-                </p>
-
-                <p>
-                  Für entsprechende Anliegen können Sie uns über die oben
-                  angegebenen Kontaktdaten erreichen.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                13. DATENSICHERHEIT
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Sicherheit
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Schutz Ihrer Daten.
-              </h2>
-
-              <div className="mt-7 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Wir treffen angemessene technische und organisatorische
-                  Massnahmen, um personenbezogene Daten vor Verlust,
-                  Missbrauch, unberechtigtem Zugriff oder unbefugter
-                  Offenlegung zu schützen.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* =================================================
-                14. AKTUALISIERUNG
-            ================================================= */}
-
-            <section className="mt-14 border-t border-neutral-200 pt-10">
-
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Aktualisierung
-              </p>
-
-              <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
-                Änderungen dieser Datenschutzerklärung.
-              </h2>
-
-              <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
-
-                <p>
-                  Wir können diese Datenschutzerklärung jederzeit anpassen,
-                  wenn sich gesetzliche Anforderungen oder die von uns
-                  eingesetzten Dienste und Funktionen ändern.
-                </p>
-
-                <p>
-                  Es gilt jeweils die auf dieser Website veröffentlichte
-                  aktuelle Fassung.
-                </p>
-
-              </div>
-
-            </section>
+                    {section.eyebrow}
+                  </p>
+
+                  <h2 className="mt-3 text-3xl font-light tracking-tight md:text-4xl">
+                    {section.title}
+                  </h2>
+
+                  <div className="mt-7 space-y-5 text-base leading-7 text-neutral-700">
+
+                    {visibleParagraphs.map(
+                      (paragraph, index) => (
+                        <p
+                          key={index}
+                          className="whitespace-pre-line"
+                        >
+                          {paragraph}
+                        </p>
+                      )
+                    )}
+
+                  </div>
+
+                </section>
+              )
+            })}
 
 
             {/* =================================================
                 STAND
             ================================================= */}
 
-            <div className="mt-16 border-t border-neutral-200 pt-8">
+            {(() => {
+              const stand = getContent(
+                'meta',
+                'stand',
+                'Stand: August 2026'
+              )
 
-              <p className="text-sm text-neutral-400">
-                Stand: August 2026
-              </p>
+              const back = getContent(
+                'meta',
+                'back',
+                'Zurück zur Startseite'
+              )
 
-              <a
-                href="/"
-                className="
-                  mt-5
-                  inline-flex
-                  items-center
-                  text-sm
-                  font-medium
-                  text-neutral-500
-                  transition-colors
-                  hover:text-[#1dabff]
-                "
-              >
-                <span className="mr-3 text-lg">
-                  ←
-                </span>
+              if (!stand && !back) {
+                return null
+              }
 
-                Zurück zur Startseite
-              </a>
+              return (
+                <div className="mt-16 border-t border-neutral-200 pt-8">
 
-            </div>
+                  {stand && (
+                    <p className="text-sm text-neutral-400">
+                      {stand}
+                    </p>
+                  )}
+
+                  {back && (
+                    <Link
+                      href="/"
+                      className="
+                        mt-5
+                        inline-flex
+                        items-center
+                        text-sm
+                        font-medium
+                        text-neutral-500
+                        transition-colors
+                        hover:text-[#1dabff]
+                      "
+                    >
+                      <span className="mr-3 text-lg">
+                        ←
+                      </span>
+
+                      {back}
+                    </Link>
+                  )}
+
+                </div>
+              )
+            })()}
 
           </div>
 
@@ -696,4 +575,3 @@ export default function DatenschutzPage() {
     </main>
   )
 }
-

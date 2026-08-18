@@ -1,4 +1,12 @@
 import Link from 'next/link'
+import PageHero from '@/components/page-hero'
+
+import {
+  getSiteContent,
+  getContent,
+  getStorageUrl,
+} from '@/lib/site-content'
+
 import { createClient } from '@/lib/supabase/server'
 
 const MYSAN_BLUE = '#1dabff'
@@ -15,234 +23,361 @@ type News = {
   created_at: string
 }
 
+/* =========================================================
+   PAGE MEDIA
+========================================================= */
+
+type PageMedia = {
+  id: string
+  page: string
+  media_type: string
+  storage_path: string | null
+  public_url: string | null
+  alt_text: string | null
+  opacity: number | null
+  visible: boolean
+  created_at?: string
+  updated_at?: string
+}
+
 export default async function NewsPage() {
+
   const supabase = await createClient()
 
   /* =========================================================
-     NEWS AUS SUPABASE
+     CONTENT
   ========================================================= */
 
-  const { data: newsData, error: newsError } = await supabase
-    .from('news')
-    .select(`
-      id,
-      title,
-      slug,
-      excerpt,
-      content,
-      image_url,
-      published,
-      featured,
-      created_at
-    `)
-    .eq('published', true)
-    .order('created_at', {
-      ascending: false,
-    })
+  const contents =
+    await getSiteContent('news')
 
-  const news = (newsData as News[] | null) || []
 
   /* =========================================================
-     DATUM
+     HERO TEXTE
   ========================================================= */
 
-  function formatDate(date: string) {
-    return new Intl.DateTimeFormat('de-CH', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(date))
+  const heroEyebrow =
+    getContent(
+      contents,
+      'hero',
+      'eyebrow',
+      'mySan Jeitziner'
+    )
+
+  const heroTitle =
+    getContent(
+      contents,
+      'hero',
+      'title',
+      'Aktuelles'
+    ) || ''
+
+  const heroTitleAccent =
+    getContent(
+      contents,
+      'hero',
+      'title_accent',
+      'von mySan'
+    ) || ''
+
+  const heroDescription =
+    getContent(
+      contents,
+      'hero',
+      'description',
+      'Neuigkeiten, Projekte und Einblicke rund um mySan Jeitziner.'
+    )
+
+
+  /* =========================================================
+     HERO BILD AUS PAGE_MEDIA
+     
+     Admin:
+     Website-Inhalte → News → Hero-Bild
+
+     page       = news
+     media_type = hero
+  ========================================================= */
+
+  const {
+    data: heroMediaData,
+    error: heroMediaError,
+  } = await supabase
+    .from('page_media')
+    .select(`
+      id,
+      page,
+      media_type,
+      storage_path,
+      public_url,
+      alt_text,
+      opacity,
+      visible,
+      created_at,
+      updated_at
+    `)
+    .eq('page', 'news')
+    .eq('media_type', 'hero')
+    .eq('visible', true)
+    .maybeSingle()
+
+  const heroMedia =
+    heroMediaData as PageMedia | null
+
+
+  /* =========================================================
+     FALLBACK HERO BILD
+     
+     Falls kein page_media Eintrag vorhanden ist,
+     wird weiterhin das alte site_content Bild verwendet.
+  ========================================================= */
+
+  const fallbackHeroImagePath =
+    getContent(
+      contents,
+      'hero',
+      'image',
+      'hero/news.jpg'
+    )
+
+  const fallbackHeroImage =
+    getStorageUrl(
+      fallbackHeroImagePath
+    ) || '/news.jpg'
+
+
+  /* =========================================================
+     AKTIVES HERO BILD
+     
+     PRIORITÄT:
+
+     1. public_url
+     2. storage_path
+     3. site_content
+     4. /news.jpg
+  ========================================================= */
+
+  let heroImage =
+    fallbackHeroImage
+
+  if (heroMedia) {
+
+    if (heroMedia.public_url) {
+
+      heroImage =
+        heroMedia.public_url
+
+    } else if (heroMedia.storage_path) {
+
+      heroImage =
+        getStorageUrl(
+          heroMedia.storage_path
+        ) || fallbackHeroImage
+
+    }
+
   }
 
+
+  /* =========================================================
+     HERO OPACITY
+  ========================================================= */
+
+  const heroImageOpacity =
+    heroMedia?.opacity ?? 0.18
+
+
+  /* =========================================================
+     HERO ALT TEXT
+  ========================================================= */
+
+  const heroImageAlt =
+    heroMedia?.alt_text ||
+    'Aktuelles von mySan Jeitziner'
+
+
+  /* =========================================================
+     MEDIA FEHLER
+  ========================================================= */
+
+  if (heroMediaError) {
+
+    console.error(
+      'NEWS PAGE MEDIA ERROR:',
+      heroMediaError
+    )
+
+  }
+
+
+  /* =========================================================
+     TEXTE
+  ========================================================= */
+
+  const emptyText =
+    getContent(
+      contents,
+      'overview',
+      'empty',
+      'Aktuell gibt es keine Neuigkeiten.'
+    ) || ''
+
+  const readMoreText =
+    getContent(
+      contents,
+      'overview',
+      'read_more',
+      'Weiterlesen'
+    ) || ''
+
+  const contactEyebrow =
+    getContent(
+      contents,
+      'contact',
+      'eyebrow',
+      'Kontakt'
+    )
+
+  const contactTitle =
+    getContent(
+      contents,
+      'contact',
+      'title',
+      'Sie haben ein Projekt?'
+    )
+
+  const contactText =
+    getContent(
+      contents,
+      'contact',
+      'text',
+      'Wir freuen uns über Ihre Kontaktaufnahme.'
+    )
+
+  const contactButton =
+    getContent(
+      contents,
+      'contact',
+      'button',
+      'Kontakt aufnehmen'
+    )
+
+
+  /* =========================================================
+     NEWS
+  ========================================================= */
+
+  const {
+    data: newsData,
+    error: newsError,
+  } =
+    await supabase
+      .from('news')
+      .select(`
+        id,
+        title,
+        slug,
+        excerpt,
+        content,
+        image_url,
+        published,
+        featured,
+        created_at
+      `)
+      .eq(
+        'published',
+        true
+      )
+      .order(
+        'created_at',
+        {
+          ascending: false,
+        }
+      )
+
+  const news =
+    (newsData as News[] | null) || []
+
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   return (
+
     <main className="bg-white text-neutral-900">
+
 
       {/* =====================================================
           HERO
       ===================================================== */}
 
-      <section className="relative overflow-hidden bg-white">
+      <PageHero
 
-        {/* Blauer linker Rand */}
+        eyebrow={
+          heroEyebrow
+        }
 
-        <div
-          className="absolute left-0 top-0 z-30 h-full w-2"
-          style={{
-            backgroundColor: MYSAN_BLUE,
-          }}
-        />
+        title={
+          <>
+            {heroTitle}
 
-        {/* Hintergrundbild */}
+            <br />
 
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
-
-          <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
-
-            <div
-              className="
-                relative
-                overflow-hidden
-                [mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]
-                [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]
-              "
-            >
-
-              <img
-                src="/news.jpg"
-                alt=""
-                aria-hidden="true"
-                className="
-                  h-auto
-                  w-full
-                  object-cover
-                  object-center
-                  opacity-[0.18]
-                "
-              />
-
-              {/* Oberer Übergang */}
-
-              <div
-                className="
-                  absolute
-                  inset-x-0
-                  top-0
-                  h-24
-                  bg-gradient-to-b
-                  from-white
-                  to-transparent
-                "
-              />
-
-              {/* Unterer Übergang */}
-
-              <div
-                className="
-                  absolute
-                  inset-x-0
-                  bottom-0
-                  h-32
-                  bg-gradient-to-t
-                  from-white
-                  via-white/80
-                  to-transparent
-                "
-              />
-
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* Hero Inhalt */}
-
-        <div
-          className="
-            relative
-            z-20
-            mx-auto
-            max-w-7xl
-            px-8
-            pb-10
-            pt-28
-            md:px-12
-            md:pb-12
-            md:pt-36
-            lg:px-16
-          "
-        >
-
-          <div className="max-w-3xl">
-
-            {/* Blauer Strich */}
-
-            <div
-              className="mb-5 h-1 w-16"
+            <span
               style={{
-                backgroundColor: MYSAN_BLUE,
-              }}
-            />
-
-            {/* Eyebrow */}
-
-            <p
-              className="
-                text-sm
-                font-semibold
-                uppercase
-                tracking-[0.25em]
-              "
-              style={{
-                color: MYSAN_BLUE,
+                color:
+                  MYSAN_BLUE,
               }}
             >
-              mySan Jeitziner
-            </p>
+              {heroTitleAccent}
+            </span>
+          </>
+        }
 
-            {/* Titel */}
+        description={
+          heroDescription
+        }
 
-            <h1
-              className="
-                mt-4
-                text-5xl
-                font-light
-                leading-[1.05]
-                tracking-tight
-                md:text-6xl
-                lg:text-7xl
-              "
-            >
-              Aktuelles
-              <br />
+        image={
+          heroImage
+        }
 
-              <span
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                von mySan
-              </span>
-            </h1>
+        imageOpacity={
+          heroImageOpacity
+        }
 
-            {/* Beschreibung */}
-
-            <p
-              className="
-                mt-6
-                max-w-2xl
-                text-lg
-                font-light
-                leading-7
-                text-neutral-600
-                md:text-xl
-              "
-            >
-              Neuigkeiten, Projekte und Einblicke
-              rund um mySan Jeitziner.
-            </p>
-
-          </div>
-
-        </div>
-
-      </section>
+      />
 
 
       {/* =====================================================
           NEWS
       ===================================================== */}
 
-      <section className="relative overflow-hidden bg-white">
+      <section
+        className="
+          relative
+          overflow-hidden
+          bg-white
+        "
+      >
 
-        {/* Blauer linker Rand */}
+        {/* Blauer Rand */}
 
         <div
-          className="absolute left-0 top-0 h-full w-2"
+          className="
+            absolute
+            left-0
+            top-0
+            h-full
+            w-2
+          "
           style={{
-            backgroundColor: MYSAN_BLUE,
+            backgroundColor:
+              MYSAN_BLUE,
           }}
         />
+
 
         <div
           className="
@@ -258,44 +393,11 @@ export default async function NewsPage() {
           "
         >
 
-          {/* Überschrift */}
 
-          <div className="mb-8">
-
-            <p
-              className="
-                text-xs
-                font-semibold
-                uppercase
-                tracking-[0.2em]
-              "
-              style={{
-                color: MYSAN_BLUE,
-              }}
-            >
-              
-            </p>
-
-            <h2
-              className="
-                mt-2
-                text-3xl
-                font-light
-                tracking-tight
-                md:text-4xl
-              "
-            >
-             
-            </h2>
-
-          </div>
-
-
-          {/* =================================================
-              FEHLER
-          ================================================= */}
+          {/* Fehler */}
 
           {newsError && (
+
             <div
               className="
                 border
@@ -309,36 +411,37 @@ export default async function NewsPage() {
             >
               Die News konnten momentan nicht geladen werden.
             </div>
+
           )}
 
 
-          {/* =================================================
-              KEINE NEWS
-          ================================================= */}
+          {/* Keine News */}
 
-          {!newsError && news.length === 0 && (
-            <div
-              className="
-                border
-                border-dashed
-                border-neutral-300
-                px-6
-                py-12
-                text-center
-                text-sm
-                text-neutral-500
-              "
-            >
-              Aktuell gibt es keine Neuigkeiten.
-            </div>
-          )}
+          {!newsError &&
+            news.length === 0 && (
+
+              <div
+                className="
+                  border
+                  border-dashed
+                  border-neutral-300
+                  px-6
+                  py-12
+                  text-center
+                  text-sm
+                  text-neutral-500
+                "
+              >
+                {emptyText}
+              </div>
+
+            )}
 
 
-          {/* =================================================
-              NEWS GRID
-          ================================================= */}
+          {/* News */}
 
           {news.length > 0 && (
+
             <div
               className="
                 grid
@@ -349,172 +452,208 @@ export default async function NewsPage() {
               "
             >
 
-              {news.map((item) => (
+              {news.map(
+                (item) => (
 
-                <Link
-                  key={item.id}
-                  href={`/news/${item.slug}`}
-                  className="group block"
-                >
-
-                  {/* Bild */}
-
-                  <div
+                  <Link
+                    key={
+                      item.id
+                    }
+                    href={`/news/${item.slug}`}
                     className="
-                      relative
-                      aspect-[16/10]
-                      overflow-hidden
-                      bg-[#F4F7FA]
+                      group
+                      block
                     "
                   >
 
-                    {item.image_url ? (
+                    {/* Bild */}
 
-                      <img
-                        src={item.image_url}
-                        alt={item.title}
-                        className="
-                          h-full
-                          w-full
-                          object-cover
-                          transition
-                          duration-700
-                          group-hover:scale-105
-                        "
-                      />
+                    <div
+                      className="
+                        relative
+                        aspect-[16/10]
+                        overflow-hidden
+                        bg-[#F4F7FA]
+                      "
+                    >
 
-                    ) : (
+                      {item.image_url ? (
+
+                        <img
+                          src={
+                            item.image_url
+                          }
+                          alt={
+                            item.title
+                          }
+                          className="
+                            h-full
+                            w-full
+                            object-cover
+                            transition
+                            duration-700
+                            group-hover:scale-105
+                          "
+                        />
+
+                      ) : (
+
+                        <div
+                          className="
+                            flex
+                            h-full
+                            w-full
+                            items-center
+                            justify-center
+                            text-white
+                          "
+                          style={{
+                            backgroundColor:
+                              MYSAN_BLUE,
+                          }}
+                        >
+                          Kein Bild vorhanden
+                        </div>
+
+                      )}
+
+                    </div>
+
+
+                    {/* Text */}
+
+                    <div
+                      className="
+                        relative
+                        border-b
+                        border-neutral-200
+                        pb-6
+                        pt-5
+                      "
+                    >
+
+                      {/* Blauer Rand */}
 
                       <div
                         className="
-                          flex
+                          absolute
+                          left-0
+                          top-0
                           h-full
-                          w-full
-                          items-center
-                          justify-center
+                          w-1
                         "
                         style={{
-                          backgroundColor: MYSAN_BLUE,
+                          backgroundColor:
+                            MYSAN_BLUE,
                         }}
+                      />
+
+
+                      <div
+                        className="
+                          pl-4
+                        "
                       >
 
-                        <div className="text-center text-white">
+                        {/* Datum */}
 
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="mx-auto h-8 w-8 opacity-80"
-                            fill="currentColor"
-                            aria-hidden="true"
+                        <p
+                          className="
+                            text-xs
+                            font-medium
+                            text-neutral-400
+                          "
+                        >
+                          {new Intl.DateTimeFormat(
+                            'de-CH',
+                            {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            }
+                          ).format(
+                            new Date(
+                              item.created_at
+                            )
+                          )}
+                        </p>
+
+
+                        {/* Titel */}
+
+                        <h3
+                          className="
+                            mt-2
+                            text-xl
+                            font-light
+                            leading-tight
+                            transition-colors
+                            duration-200
+                            group-hover:text-[#1dabff]
+                          "
+                        >
+                          {item.title}
+                        </h3>
+
+
+                        {/* Excerpt */}
+
+                        {item.excerpt && (
+
+                          <div
+                            className="
+                              mt-3
+                              line-clamp-3
+                              text-sm
+                              leading-6
+                              text-neutral-600
+                            "
+                            dangerouslySetInnerHTML={{
+                              __html:
+                                item.excerpt,
+                            }}
+                          />
+
+                        )}
+
+
+                        {/* Weiterlesen */}
+
+                        <div
+                          className="
+                            mt-4
+                            text-sm
+                            font-semibold
+                          "
+                          style={{
+                            color:
+                              MYSAN_BLUE,
+                          }}
+                        >
+
+                          {readMoreText}
+
+                          <span
+                            className="
+                              ml-2
+                            "
                           >
-                            <path d="M12 2.5C12 2.5 5.5 10.1 5.5 15.2C5.5 19.2 8.4 22 12 22s6.5-2.8 6.5-6.8C18.5 10.1 12 2.5 12 2.5Z" />
-                          </svg>
+                            →
+                          </span>
 
                         </div>
 
                       </div>
 
-                    )}
-
-                  </div>
-
-
-                  {/* Inhalt */}
-
-                  <div
-                    className="
-                      relative
-                      border-b
-                      border-neutral-200
-                      pb-6
-                      pt-5
-                    "
-                  >
-
-                    {/* Blauer Strich */}
-
-                    <div
-                      className="
-                        absolute
-                        left-0
-                        top-0
-                        h-full
-                        w-1
-                      "
-                      style={{
-                        backgroundColor: MYSAN_BLUE,
-                      }}
-                    />
-
-                    <div className="pl-4">
-
-                      {/* Datum */}
-
-                      <p className="text-xs font-medium text-neutral-400">
-                        {formatDate(item.created_at)}
-                      </p>
-
-
-                      {/* Titel */}
-
-                      <h3
-                        className="
-                          mt-2
-                          text-xl
-                          font-light
-                          leading-tight
-                          transition-colors
-                          duration-200
-                          group-hover:text-[#1dabff]
-                        "
-                      >
-                        {item.title}
-                      </h3>
-
-
-                      {/* Kurztext */}
-
-                      {item.excerpt && (
-                        <p
-                          className="
-                            mt-3
-                            line-clamp-3
-                            text-sm
-                            leading-6
-                            text-neutral-600
-                          "
-                        >
-                          {item.excerpt}
-                        </p>
-                      )}
-
-
-                      {/* Link */}
-
-                      <div
-                        className="
-                          mt-4
-                          text-sm
-                          font-semibold
-                        "
-                        style={{
-                          color: MYSAN_BLUE,
-                        }}
-                      >
-                        Weiterlesen
-                        <span className="ml-2">
-                          →
-                        </span>
-                      </div>
-
                     </div>
 
-                  </div>
+                  </Link>
 
-                </Link>
-
-              ))}
+                )
+              )}
 
             </div>
+
           )}
 
         </div>
@@ -527,9 +666,13 @@ export default async function NewsPage() {
       ===================================================== */}
 
       <section
-        className="relative overflow-hidden"
+        className="
+          relative
+          overflow-hidden
+        "
         style={{
-          backgroundColor: MYSAN_BLUE,
+          backgroundColor:
+            MYSAN_BLUE,
         }}
       >
 
@@ -558,60 +701,91 @@ export default async function NewsPage() {
 
             <div>
 
-              <p
-                className="
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-[0.2em]
-                  text-white/60
-                "
-              >
-                Kontakt
-              </p>
+              {contactEyebrow && (
 
-              <h2
-                className="
-                  mt-2
-                  text-3xl
-                  font-light
-                  text-white
-                  md:text-4xl
-                "
-              >
-                Sie haben ein Projekt?
-              </h2>
+                <p
+                  className="
+                    text-xs
+                    font-semibold
+                    uppercase
+                    tracking-[0.2em]
+                    text-white/60
+                  "
+                >
+                  {contactEyebrow}
+                </p>
 
-              <p className="mt-2 text-sm text-white/75">
-                Wir freuen uns über Ihre Kontaktaufnahme.
-              </p>
+              )}
+
+
+              {contactTitle && (
+
+                <h2
+                  className="
+                    mt-2
+                    text-3xl
+                    font-light
+                    text-white
+                    md:text-4xl
+                  "
+                >
+                  {contactTitle}
+                </h2>
+
+              )}
+
+
+              {contactText && (
+
+                <p
+                  className="
+                    mt-2
+                    text-sm
+                    text-white/75
+                  "
+                >
+                  {contactText}
+                </p>
+
+              )}
 
             </div>
 
 
-            <Link
-              href="/kontakt"
-              className="
-                inline-flex
-                w-fit
-                items-center
-                rounded-full
-                bg-white
-                px-6
-                py-3
-                text-sm
-                font-semibold
-                text-neutral-900
-                transition
-                hover:bg-neutral-100
-              "
-            >
-              Kontakt aufnehmen
+            {contactButton && (
 
-              <span className="ml-3 text-lg">
-                →
-              </span>
-            </Link>
+              <Link
+                href="/kontakt"
+                className="
+                  inline-flex
+                  w-fit
+                  items-center
+                  rounded-full
+                  bg-white
+                  px-6
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-neutral-900
+                  transition
+                  hover:bg-neutral-100
+                "
+              >
+
+                {contactButton}
+
+                <span
+                  className="
+                    ml-3
+                    text-lg
+                  "
+                >
+                  →
+                </span>
+
+              </Link>
+
+            )}
 
           </div>
 

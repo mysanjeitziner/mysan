@@ -1,8 +1,19 @@
-
 import Link from 'next/link'
+import PageHero from '@/components/page-hero'
+
+import {
+  getSiteContent,
+  getContent,
+  getStorageUrl,
+} from '@/lib/site-content'
+
 import { createClient } from '@/lib/supabase/server'
 
 const MYSAN_BLUE = '#1dabff'
+
+/* =========================================================
+   REFERENCE
+========================================================= */
 
 type Reference = {
   id: string
@@ -15,53 +26,310 @@ type Reference = {
   created_at?: string
 }
 
+/* =========================================================
+   REFERENCE IMAGE
+========================================================= */
+
 type ReferenceImage = {
   id: string
   reference_id: string
-  image_url: string
+  image_url: string | null
   sort_order?: number | null
 }
 
+/* =========================================================
+   PAGE MEDIA
+========================================================= */
+
+type PageMedia = {
+  id: string
+  page: string
+  media_type: string
+  storage_path: string | null
+  public_url: string | null
+  alt_text: string | null
+  opacity: number | null
+  visible: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+/* =========================================================
+   PAGE
+========================================================= */
+
 export default async function ReferenzenPage() {
+
   const supabase = await createClient()
 
   /* =========================================================
-     REFERENZEN AUS SUPABASE
+     CONTENT
   ========================================================= */
 
-  const { data: referencesData, error: referencesError } =
-    await supabase
-      .from('references')
-      .select(`
-        id,
-        title,
-        slug,
-        location,
-        year,
-        published,
-        featured,
-        created_at
-      `)
-      .eq('published', true)
-      .order('created_at', {
-        ascending: false,
-      })
+  const contents =
+    await getSiteContent('referenzen')
+
+
+  /* =========================================================
+     HERO TEXTE
+  ========================================================= */
+
+  const heroEyebrow =
+    getContent(
+      contents,
+      'hero',
+      'eyebrow',
+      'mySan Jeitziner'
+    )
+
+  const heroTitle =
+    getContent(
+      contents,
+      'hero',
+      'title',
+      'Unsere\nReferenzen'
+    ) || ''
+
+  const heroDescription =
+    getContent(
+      contents,
+      'hero',
+      'description',
+      'Einblick in ausgewählte Projekte und Arbeiten von mySan Jeitziner.'
+    )
+
+
+  /* =========================================================
+     HERO BILD AUS PAGE_MEDIA
+     
+     Admin:
+     Website-Inhalte → Referenzen → Hero-Bild
+
+     page       = referenzen
+     media_type = hero
+  ========================================================= */
+
+  const {
+    data: heroMediaData,
+    error: heroMediaError,
+  } = await supabase
+    .from('page_media')
+    .select(`
+      id,
+      page,
+      media_type,
+      storage_path,
+      public_url,
+      alt_text,
+      opacity,
+      visible,
+      created_at,
+      updated_at
+    `)
+    .eq('page', 'referenzen')
+    .eq('media_type', 'hero')
+    .eq('visible', true)
+    .maybeSingle()
+
+  const heroMedia =
+    heroMediaData as PageMedia | null
+
+
+  /* =========================================================
+     FALLBACK HERO BILD
+  ========================================================= */
+
+  const fallbackHeroImagePath =
+    getContent(
+      contents,
+      'hero',
+      'image',
+      'hero/referenzen.jpg'
+    )
+
+  const fallbackHeroImage =
+    getStorageUrl(
+      fallbackHeroImagePath
+    ) || '/badewanne.jpg'
+
+
+  /* =========================================================
+     AKTIVES HERO BILD
+     
+     PRIORITÄT:
+
+     1. public_url
+     2. storage_path
+     3. site_content
+     4. /badewanne.jpg
+  ========================================================= */
+
+  let heroImage =
+    fallbackHeroImage
+
+  if (heroMedia) {
+
+    if (heroMedia.public_url) {
+
+      heroImage =
+        heroMedia.public_url
+
+    } else if (heroMedia.storage_path) {
+
+      heroImage =
+        getStorageUrl(
+          heroMedia.storage_path
+        ) || fallbackHeroImage
+
+    }
+
+  }
+
+
+  /* =========================================================
+     HERO OPACITY
+  ========================================================= */
+
+  const heroImageOpacity =
+    heroMedia?.opacity ?? 0.40
+
+
+  /* =========================================================
+     HERO ALT
+  ========================================================= */
+
+  const heroImageAlt =
+    heroMedia?.alt_text ||
+    'Referenzen von mySan Jeitziner'
+
+
+  /* =========================================================
+     MEDIA FEHLER
+  ========================================================= */
+
+  if (heroMediaError) {
+
+    console.error(
+      'REFERENZEN PAGE MEDIA ERROR:',
+      heroMediaError
+    )
+
+  }
+
+
+  /* =========================================================
+     PROJEKTE TEXTE
+  ========================================================= */
+
+  const projectsEyebrow =
+    getContent(
+      contents,
+      'projects',
+      'eyebrow',
+      'Projekte'
+    )
+
+  const projectsTitle =
+    getContent(
+      contents,
+      'projects',
+      'title',
+      'Sanitärarbeiten mit Qualität'
+    )
+
+  const emptyText =
+    getContent(
+      contents,
+      'projects',
+      'empty',
+      'Aktuell sind keine Referenzen veröffentlicht.'
+    ) || ''
+
+
+  /* =========================================================
+     KONTAKT
+  ========================================================= */
+
+  const contactEyebrow =
+    getContent(
+      contents,
+      'contact',
+      'eyebrow',
+      'Kontakt'
+    )
+
+  const contactTitle =
+    getContent(
+      contents,
+      'contact',
+      'title',
+      'Sie haben ein Projekt?'
+    )
+
+  const contactText =
+    getContent(
+      contents,
+      'contact',
+      'text',
+      'Wir freuen uns über Ihre Kontaktaufnahme.'
+    )
+
+  const contactButton =
+    getContent(
+      contents,
+      'contact',
+      'button',
+      'Kontakt aufnehmen'
+    )
+
+
+  /* =========================================================
+     REFERENZEN LADEN
+  ========================================================= */
+
+  const {
+    data: referencesData,
+    error: referencesError,
+  } = await supabase
+    .from('references')
+    .select(`
+      id,
+      title,
+      slug,
+      location,
+      year,
+      published,
+      featured,
+      created_at
+    `)
+    .eq('published', true)
+    .order('created_at', {
+      ascending: false,
+    })
 
   const references =
     (referencesData as Reference[] | null) || []
 
+
   /* =========================================================
-     BILDER AUS SUPABASE
+     REFERENZ-BILDER LADEN
   ========================================================= */
 
-  const referenceIds = references.map(
-    (reference) => reference.id
-  )
+  const referenceIds =
+    references.map(
+      (reference) =>
+        reference.id
+    )
 
-  let referenceImages: ReferenceImage[] = []
+  let referenceImages:
+    ReferenceImage[] = []
 
   if (referenceIds.length > 0) {
-    const { data: imagesData } = await supabase
+
+    const {
+      data: imagesData,
+      error: imagesError,
+    } = await supabase
       .from('reference_images')
       .select(`
         id,
@@ -69,215 +337,217 @@ export default async function ReferenzenPage() {
         image_url,
         sort_order
       `)
-      .in('reference_id', referenceIds)
-      .order('sort_order', {
-        ascending: true,
-      })
+      .in(
+        'reference_id',
+        referenceIds
+      )
+      .order(
+        'sort_order',
+        {
+          ascending: true,
+        }
+      )
+
+    if (imagesError) {
+
+      console.error(
+        'REFERENZ BILDER FEHLER:',
+        imagesError
+      )
+
+    }
 
     referenceImages =
       (imagesData as ReferenceImage[] | null) || []
+
   }
+
 
   /* =========================================================
-     ERSTES BILD EINER REFERENZ
+     REFERENZ-BILD AUFLÖSEN
+     
+     Die Bilder aus deiner Datenbank sind bereits
+     vollständige Supabase URLs:
+
+     https://jkuysvbbsxfbuqmxqfaw.supabase.co/...
+     
+     Deshalb werden vollständige URLs direkt verwendet.
   ========================================================= */
 
-  function getReferenceImage(referenceId: string) {
-    return referenceImages.find(
-      (image) =>
-        image.reference_id === referenceId
-    )?.image_url
+  function resolveReferenceImage(
+    imageUrl: string | null | undefined
+  ): string | null {
+
+    if (!imageUrl) {
+      return null
+    }
+
+    const value =
+      imageUrl.trim()
+
+    if (!value) {
+      return null
+    }
+
+    /* Vollständige URL */
+
+    if (
+      value.startsWith('http://') ||
+      value.startsWith('https://')
+    ) {
+
+      return value
+
+    }
+
+    /* Lokaler Pfad */
+
+    if (
+      value.startsWith('/')
+    ) {
+
+      return value
+
+    }
+
+    /* Supabase Storage Pfad */
+
+    return (
+      getStorageUrl(value) ||
+      `/${value}`
+    )
+
   }
 
+
+  /* =========================================================
+     BILD ZUR REFERENZ
+  ========================================================= */
+
+  function getReferenceImage(
+    referenceId: string
+  ): string | null {
+
+    const image =
+      referenceImages.find(
+        (item) =>
+          item.reference_id ===
+          referenceId
+      )
+
+    return resolveReferenceImage(
+      image?.image_url
+    )
+
+  }
+
+
+  /* =========================================================
+     HERO TITEL
+  ========================================================= */
+
+  const heroTitleParts =
+    heroTitle.split('\n')
+
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   return (
+
     <main className="bg-white text-neutral-900">
+
 
       {/* =====================================================
           HERO
       ===================================================== */}
 
-      <section className="relative overflow-hidden bg-white">
+      <PageHero
 
-        {/* Blauer linker Rand */}
+        eyebrow={
+          heroEyebrow
+        }
 
-        <div
-          className="absolute left-0 top-0 z-30 h-full w-2"
-          style={{
-            backgroundColor: MYSAN_BLUE,
-          }}
-        />
+        title={
+          <>
+            {heroTitleParts.map(
+              (line, index) => (
 
-        {/* Wasser / dezenter Hintergrund */}
+                <span
+                  key={index}
+                >
 
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
+                  {index > 0 && (
+                    <br />
+                  )}
 
-          <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
+                  {index === 1 ? (
 
-            <div
-              className="
-                relative
-                overflow-hidden
-                [mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]
-                [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]
-              "
-            >
+                    <span
+                      style={{
+                        color:
+                          MYSAN_BLUE,
+                      }}
+                    >
+                      {line}
+                    </span>
 
-             <img
-  src="/badewanne.jpg"
-  alt=""
-  aria-hidden="true"
-  className="
-    h-auto
-    w-full
-    object-cover
-    object-center
-    opacity-[0.40]
-  "
-/>
+                  ) : (
 
-              {/* Oberer Übergang */}
+                    line
 
-              <div
-                className="
-                  absolute
-                  inset-x-0
-                  top-0
-                  h-24
-                  bg-gradient-to-b
-                  from-white
-                  to-transparent
-                "
-              />
+                  )}
 
-              {/* Unterer Übergang */}
+                </span>
 
-              <div
-                className="
-                  absolute
-                  inset-x-0
-                  bottom-0
-                  h-24
-                  bg-gradient-to-t
-                  from-white
-                  to-transparent
-                "
-              />
+              )
+            )}
+          </>
+        }
 
-            </div>
+        description={
+          heroDescription
+        }
 
-          </div>
+        image={
+          heroImage
+        }
 
-        </div>
+        imageOpacity={
+          heroImageOpacity
+        }
 
-
-        {/* Hero Inhalt */}
-
-        <div
-          className="
-            relative
-            z-20
-            mx-auto
-            max-w-7xl
-            px-8
-            pb-10
-            pt-28
-            md:px-12
-            md:pb-12
-            md:pt-36
-            lg:px-16
-          "
-        >
-
-          <div className="max-w-3xl">
-
-            {/* Blauer Strich */}
-
-            <div
-              className="mb-5 h-1 w-16"
-              style={{
-                backgroundColor: MYSAN_BLUE,
-              }}
-            />
-
-            {/* Eyebrow */}
-
-            <p
-              className="
-                text-sm
-                font-semibold
-                uppercase
-                tracking-[0.25em]
-              "
-              style={{
-                color: MYSAN_BLUE,
-              }}
-            >
-              mySan Jeitziner
-            </p>
-
-            {/* Titel */}
-
-            <h1
-              className="
-                mt-4
-                text-5xl
-                font-light
-                leading-[1.05]
-                tracking-tight
-                md:text-6xl
-                lg:text-7xl
-              "
-            >
-              Unsere
-              <br />
-
-              <span
-                style={{
-                  color: MYSAN_BLUE,
-                }}
-              >
-                Referenzen
-              </span>
-            </h1>
-
-            {/* Beschreibung */}
-
-            <p
-              className="
-                mt-6
-                max-w-2xl
-                text-lg
-                font-light
-                leading-7
-                text-neutral-600
-                md:text-xl
-              "
-            >
-              Einblick in ausgewählte Projekte
-              und Arbeiten von mySan Jeitziner.
-            </p>
-
-          </div>
-
-        </div>
-
-      </section>
+      />
 
 
       {/* =====================================================
           REFERENZEN
       ===================================================== */}
 
-      <section className="relative overflow-hidden">
+      <section
+        className="
+          relative
+          overflow-hidden
+        "
+      >
 
-        {/* Blauer linker Rand */}
+        {/* Blauer Rand */}
 
         <div
-          className="absolute left-0 top-0 h-full w-2"
+          className="
+            absolute
+            left-0
+            top-0
+            h-full
+            w-2
+          "
           style={{
-            backgroundColor: MYSAN_BLUE,
+            backgroundColor:
+              MYSAN_BLUE,
           }}
         />
+
 
         <div
           className="
@@ -293,7 +563,10 @@ export default async function ReferenzenPage() {
           "
         >
 
-          {/* Überschrift */}
+
+          {/* =================================================
+              ÜBERSCHRIFT
+          ================================================= */}
 
           <div className="mb-8">
 
@@ -305,45 +578,78 @@ export default async function ReferenzenPage() {
                 tracking-[0.2em]
               "
               style={{
-                color: MYSAN_BLUE,
+                color:
+                  MYSAN_BLUE,
               }}
             >
-              Projekte
+              {projectsEyebrow}
             </p>
 
-            <h2 className="mt-2 text-3xl font-light tracking-tight md:text-4xl">
-              Sanitärarbeiten mit Qualität
+
+            <h2
+              className="
+                mt-2
+                text-3xl
+                font-light
+                tracking-tight
+                md:text-4xl
+              "
+            >
+              {projectsTitle}
             </h2>
 
           </div>
 
 
           {/* =================================================
-              KEINE REFERENZEN
+              FEHLER
           ================================================= */}
 
-          {references.length === 0 && (
+          {referencesError && (
 
             <div
               className="
-                border
-                border-dashed
-                border-neutral-300
-                px-6
-                py-12
-                text-center
+                mb-6
+                rounded-lg
+                bg-red-50
+                p-4
                 text-sm
-                text-neutral-500
+                text-red-700
               "
             >
-              Aktuell sind keine Referenzen veröffentlicht.
+              Die Referenzen konnten nicht geladen werden.
             </div>
 
           )}
 
 
           {/* =================================================
-              REFERENZ-GRID
+              KEINE REFERENZEN
+          ================================================= */}
+
+          {!referencesError &&
+            references.length === 0 && (
+
+              <div
+                className="
+                  border
+                  border-dashed
+                  border-neutral-300
+                  px-6
+                  py-12
+                  text-center
+                  text-sm
+                  text-neutral-500
+                "
+              >
+                {emptyText}
+              </div>
+
+            )}
+
+
+          {/* =================================================
+              REFERENZEN GRID
           ================================================= */}
 
           {references.length > 0 && (
@@ -358,157 +664,203 @@ export default async function ReferenzenPage() {
               "
             >
 
-              {references.map((reference) => {
+              {references.map(
+                (reference) => {
 
-                const image =
-                  getReferenceImage(reference.id)
+                  const image =
+                    getReferenceImage(
+                      reference.id
+                    )
 
-                return (
+                  return (
 
-                  <Link
-                    key={reference.id}
-                    href={`/referenzen/${reference.slug}`}
-                    className="group block"
-                  >
-
-                    {/* Bild */}
-
-                    <div
+                    <Link
+                      key={
+                        reference.id
+                      }
+                      href={`/referenzen/${reference.slug}`}
                       className="
-                        relative
-                        aspect-[4/3]
-                        overflow-hidden
-                        bg-[#F4F7FA]
+                        group
+                        block
                       "
                     >
 
-                      {image ? (
 
-                        <img
-                          src={image}
-                          alt={reference.title}
-                          className="
-                            h-full
-                            w-full
-                            object-cover
-                            transition
-                            duration-700
-                            group-hover:scale-105
-                          "
-                        />
-
-                      ) : (
-
-                        <div
-                          className="
-                            flex
-                            h-full
-                            items-center
-                            justify-center
-                            text-sm
-                            text-neutral-400
-                          "
-                        >
-                          Kein Bild vorhanden
-                        </div>
-
-                      )}
-
-                    </div>
-
-
-                    {/* Inhalt */}
-
-                    <div
-                      className="
-                        relative
-                        border-b
-                        border-neutral-200
-                        pb-5
-                        pt-4
-                      "
-                    >
-
-                      {/* Blauer Strich */}
+                      {/* =====================================
+                          BILD
+                      ===================================== */}
 
                       <div
                         className="
-                          absolute
-                          left-0
-                          top-0
-                          h-full
-                          w-1
+                          relative
+                          aspect-[4/3]
+                          overflow-hidden
+                          bg-[#F4F7FA]
                         "
-                        style={{
-                          backgroundColor: MYSAN_BLUE,
-                        }}
-                      />
+                      >
 
-                      <div className="pl-4">
+                        {image ? (
 
-                        {/* Tropfen */}
+                          <img
+                            src={image}
+                            alt={
+                              reference.title
+                            }
+                            className="
+                              h-full
+                              w-full
+                              object-cover
+                              transition
+                              duration-700
+                              group-hover:scale-105
+                            "
+                          />
 
-                        <div
-                          className="mb-3 flex h-7 w-7 items-center"
-                          style={{
-                            color: MYSAN_BLUE,
-                          }}
-                        >
+                        ) : (
 
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="h-6 w-6"
-                            fill="currentColor"
-                            aria-hidden="true"
+                          <div
+                            className="
+                              flex
+                              h-full
+                              w-full
+                              items-center
+                              justify-center
+                              text-sm
+                              text-neutral-400
+                            "
                           >
-                            <path d="M12 2.5C12 2.5 5.5 10.1 5.5 15.2C5.5 19.2 8.4 22 12 22s6.5-2.8 6.5-6.8C18.5 10.1 12 2.5 12 2.5Z" />
-                          </svg>
-
-                        </div>
-
-
-                        {/* Titel */}
-
-                        <h3
-                          className="
-                            text-xl
-                            font-light
-                            transition-colors
-                            duration-200
-                            group-hover:text-[#1dabff]
-                          "
-                        >
-                          {reference.title}
-                        </h3>
-
-
-                        {/* Ort / Jahr */}
-
-                        {(reference.location ||
-                          reference.year) && (
-
-                          <p className="mt-1.5 text-sm text-neutral-500">
-
-                            {reference.location}
-
-                            {reference.location &&
-                              reference.year &&
-                              ' · '}
-
-                            {reference.year}
-
-                          </p>
+                            Kein Bild vorhanden
+                          </div>
 
                         )}
 
                       </div>
 
-                    </div>
 
-                  </Link>
+                      {/* =====================================
+                          TEXT
+                      ===================================== */}
 
-                )
-              })}
+                      <div
+                        className="
+                          relative
+                          border-b
+                          border-neutral-200
+                          pb-5
+                          pt-4
+                        "
+                      >
+
+                        <div
+                          className="
+                            absolute
+                            left-0
+                            top-0
+                            h-full
+                            w-1
+                          "
+                          style={{
+                            backgroundColor:
+                              MYSAN_BLUE,
+                          }}
+                        />
+
+
+                        <div
+                          className="
+                            pl-4
+                          "
+                        >
+
+
+                          {/* ICON */}
+
+                          <div
+                            className="
+                              mb-3
+                              flex
+                              h-7
+                              w-7
+                              items-center
+                            "
+                            style={{
+                              color:
+                                MYSAN_BLUE,
+                            }}
+                          >
+
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-6 w-6"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+
+                              <path
+                                d="
+                                  M12 2.5
+                                  C12 2.5 5.5 10.1 5.5 15.2
+                                  C5.5 19.2 8.4 22 12 22
+                                  S18.5 19.2 18.5 15.2
+                                  C18.5 10.1 12 2.5 12 2.5Z
+                                "
+                              />
+
+                            </svg>
+
+                          </div>
+
+
+                          {/* TITEL */}
+
+                          <h3
+                            className="
+                              text-xl
+                              font-light
+                              transition-colors
+                              duration-200
+                              group-hover:text-[#1dabff]
+                            "
+                          >
+                            {reference.title}
+                          </h3>
+
+
+                          {/* ORT / JAHR */}
+
+                          {(reference.location ||
+                            reference.year) && (
+
+                            <p
+                              className="
+                                mt-1.5
+                                text-sm
+                                text-neutral-500
+                              "
+                            >
+
+                              {reference.location}
+
+                              {reference.location &&
+                                reference.year &&
+                                ' · '}
+
+                              {reference.year}
+
+                            </p>
+
+                          )}
+
+                        </div>
+
+                      </div>
+
+                    </Link>
+
+                  )
+
+                }
+              )}
 
             </div>
 
@@ -524,9 +876,13 @@ export default async function ReferenzenPage() {
       ===================================================== */}
 
       <section
-        className="relative overflow-hidden"
+        className="
+          relative
+          overflow-hidden
+        "
         style={{
-          backgroundColor: MYSAN_BLUE,
+          backgroundColor:
+            MYSAN_BLUE,
         }}
       >
 
@@ -555,52 +911,91 @@ export default async function ReferenzenPage() {
 
             <div>
 
-              <p
-                className="
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-[0.2em]
-                  text-white/60
-                "
-              >
-                Kontakt
-              </p>
+              {contactEyebrow && (
 
-              <h2 className="mt-2 text-3xl font-light text-white md:text-4xl">
-                Sie haben ein Projekt?
-              </h2>
+                <p
+                  className="
+                    text-xs
+                    font-semibold
+                    uppercase
+                    tracking-[0.2em]
+                    text-white/60
+                  "
+                >
+                  {contactEyebrow}
+                </p>
 
-              <p className="mt-2 text-sm text-white/75">
-                Wir freuen uns über Ihre Kontaktaufnahme.
-              </p>
+              )}
+
+
+              {contactTitle && (
+
+                <h2
+                  className="
+                    mt-2
+                    text-3xl
+                    font-light
+                    text-white
+                    md:text-4xl
+                  "
+                >
+                  {contactTitle}
+                </h2>
+
+              )}
+
+
+              {contactText && (
+
+                <p
+                  className="
+                    mt-2
+                    text-sm
+                    text-white/75
+                  "
+                >
+                  {contactText}
+                </p>
+
+              )}
 
             </div>
 
 
-            <Link
-              href="/kontakt"
-              className="
-                inline-flex
-                w-fit
-                items-center
-                rounded-full
-                bg-white
-                px-6
-                py-3
-                text-sm
-                font-semibold
-                text-neutral-900
-                transition
-                hover:bg-neutral-100
-              "
-            >
-              Kontakt aufnehmen
+            {contactButton && (
 
-              <span className="ml-3 text-lg">
-                →
-              </span>
-            </Link>
+              <Link
+                href="/kontakt"
+                className="
+                  inline-flex
+                  w-fit
+                  items-center
+                  rounded-full
+                  bg-white
+                  px-6
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-neutral-900
+                  transition
+                  hover:bg-neutral-100
+                "
+              >
+
+                {contactButton}
+
+                <span
+                  className="
+                    ml-3
+                    text-lg
+                  "
+                >
+                  →
+                </span>
+
+              </Link>
+
+            )}
 
           </div>
 
@@ -609,6 +1004,6 @@ export default async function ReferenzenPage() {
       </section>
 
     </main>
+
   )
 }
-

@@ -1,16 +1,21 @@
-
-import type { ReactNode } from 'react'
+import React from 'react'
 
 const MYSAN_BLUE = '#1dabff'
 
 type PageHeroProps = {
   eyebrow?: string
-  title: ReactNode
-  description?: ReactNode
-  image?: string
+  title: React.ReactNode
+  description?: React.ReactNode
+
+  image?: string | null
+
   imageOpacity?: number
-  children?: ReactNode
+
+  imageAlt?: string
+
+  children?: React.ReactNode
 }
+
 
 export default function PageHero({
   eyebrow,
@@ -18,17 +23,26 @@ export default function PageHero({
   description,
   image,
   imageOpacity = 0.18,
+  imageAlt = '',
   children,
 }: PageHeroProps) {
+
   return (
     <section className="relative overflow-hidden bg-white">
 
       {/* =====================================================
-          LINKER BLAUER STREIFEN
+          BLAUER RAND
       ===================================================== */}
 
       <div
-        className="absolute left-0 top-0 z-30 h-full w-2"
+        className="
+          absolute
+          left-0
+          top-0
+          z-30
+          h-full
+          w-2
+        "
         style={{
           backgroundColor: MYSAN_BLUE,
         }}
@@ -36,40 +50,57 @@ export default function PageHero({
 
 
       {/* =====================================================
-          AUTO / HINTERGRUNDBILD
+          HERO BILD
       ===================================================== */}
 
       {image && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
 
-          <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-x-0
+            top-0
+            z-10
+          "
+        >
+
+          <div
+            className="
+              mx-auto
+              max-w-7xl
+              px-8
+              md:px-12
+              lg:px-16
+            "
+          >
 
             <div
               className="
                 relative
                 overflow-hidden
-                [mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_88%,transparent_100%)]
-                [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_88%,transparent_100%)]
+                [mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]
+                [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]
               "
             >
 
               <img
                 src={image}
-                alt=""
-                aria-hidden="true"
+                alt={imageAlt}
+                aria-hidden={!imageAlt}
                 className="
                   h-auto
+                  min-h-[360px]
                   w-full
-                  object-contain
-                  object-left-top
+                  object-cover
+                  object-center
                 "
                 style={{
                   opacity: imageOpacity,
                 }}
               />
 
-
-              {/* Oberer Übergang */}
+              {/* OBEN */}
 
               <div
                 className="
@@ -83,18 +114,17 @@ export default function PageHero({
                 "
               />
 
-
-              {/* Unterer Übergang */}
+              {/* UNTEN */}
 
               <div
                 className="
                   absolute
                   inset-x-0
                   bottom-0
-                  h-28
+                  h-32
                   bg-gradient-to-t
                   from-white
-                  via-white/70
+                  via-white/80
                   to-transparent
                 "
               />
@@ -104,11 +134,12 @@ export default function PageHero({
           </div>
 
         </div>
+
       )}
 
 
       {/* =====================================================
-          HERO TEXT
+          HERO INHALT
       ===================================================== */}
 
       <div
@@ -129,43 +160,41 @@ export default function PageHero({
 
         <div className="max-w-3xl">
 
-
-          {/* =================================================
-              BLAUER STRICH
-          ================================================= */}
-
-          <div
-            className="mb-5 h-1 w-16"
-            style={{
-              backgroundColor: MYSAN_BLUE,
-            }}
-          />
-
-
-          {/* =================================================
-              EYEBROW
-          ================================================= */}
-
           {eyebrow && (
-            <p
-              className="
-                text-sm
-                font-semibold
-                uppercase
-                tracking-[0.25em]
-              "
-              style={{
-                color: MYSAN_BLUE,
-              }}
-            >
-              {eyebrow}
-            </p>
+
+            <>
+
+              <div
+                className="
+                  mb-5
+                  h-1
+                  w-16
+                "
+                style={{
+                  backgroundColor: MYSAN_BLUE,
+                }}
+              />
+
+              <p
+                className="
+                  text-sm
+                  font-semibold
+                  uppercase
+                  tracking-[0.25em]
+                "
+                style={{
+                  color: MYSAN_BLUE,
+                }}
+              >
+                {eyebrow}
+              </p>
+
+            </>
+
           )}
 
 
-          {/* =================================================
-              TITEL
-          ================================================= */}
+          {/* TITEL */}
 
           <h1
             className="
@@ -174,44 +203,43 @@ export default function PageHero({
               font-light
               leading-[1.05]
               tracking-tight
-              text-neutral-900
-              md:text-7xl
-              lg:text-8xl
+              md:text-6xl
+              lg:text-7xl
             "
           >
             {title}
           </h1>
 
 
-          {/* =================================================
-              BESCHREIBUNG
-          ================================================= */}
+          {/* BESCHREIBUNG */}
 
           {description && (
-            <p
+
+            <div
               className="
                 mt-6
-                max-w-xl
-                text-xl
+                max-w-2xl
+                text-lg
                 font-light
-                leading-8
+                leading-7
                 text-neutral-600
-                md:text-2xl
+                md:text-xl
               "
             >
               {description}
-            </p>
+            </div>
+
           )}
 
 
-          {/* =================================================
-              BUTTONS
-          ================================================= */}
+          {/* BUTTONS */}
 
           {children && (
+
             <div className="mt-7">
               {children}
             </div>
+
           )}
 
         </div>
@@ -221,4 +249,3 @@ export default function PageHero({
     </section>
   )
 }
-

@@ -1,6 +1,4 @@
-
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import AdminLogout from './AdminLogout'
 
@@ -11,25 +9,9 @@ export default async function AdminLayout({
 }) {
   const supabase = await createClient()
 
-  /*
-   * =========================================================
-   * BENUTZER PRÜFEN
-   * =========================================================
-   */
-
   const {
     data: { user },
-    error,
   } = await supabase.auth.getUser()
-
-  /*
-   * Kein eingeloggter Benutzer
-   * → sofort zum Login
-   */
-
-  if (error || !user) {
-    redirect('/login')
-  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -40,7 +22,9 @@ export default async function AdminLayout({
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r bg-white lg:flex lg:flex-col">
 
-        {/* LOGO */}
+        {/* =====================================================
+            LOGO
+        ===================================================== */}
 
         <div className="flex h-24 items-center border-b px-6">
 
@@ -57,11 +41,11 @@ export default async function AdminLayout({
 
         </div>
 
-        {/* =================================================
+        {/* =====================================================
             NAVIGATION
-        ================================================= */}
+        ===================================================== */}
 
-        <nav className="flex-1 p-4">
+        <nav className="flex-1 overflow-y-auto p-4">
 
           <div className="mb-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
             Verwaltung
@@ -69,155 +53,215 @@ export default async function AdminLayout({
 
           <div className="space-y-1">
 
-            {/* Dashboard */}
+            {/* =================================================
+                DASHBOARD
+            ================================================= */}
 
             <Link
               href="/admin"
               className="
-                flex
-                items-center
-                gap-3
+                flex items-center gap-3 rounded-xl px-4 py-3
+                text-sm font-medium text-gray-700
+                transition
+                hover:bg-gray-100
+                hover:text-black
+              "
+            >
+              <span className="flex h-6 w-6 items-center justify-center text-lg">
+                ▦
+              </span>
+
+              <span>
+                Dashboard
+              </span>
+            </Link>
+
+            {/* =================================================
+                WEBSITE-INHALTE
+            ================================================= */}
+
+            <Link
+              href="/admin/website-inhalte"
+              className="
+                group
+                flex items-center gap-3
                 rounded-xl
-                px-4
-                py-3
-                text-sm
-                font-medium
+                px-4 py-3
+                text-sm font-medium
                 text-gray-700
                 transition
                 hover:bg-gray-100
                 hover:text-black
               "
             >
-              <span className="flex h-6 w-6 items-center justify-center">
-                ▦
+
+              <span
+                className="
+                  flex h-7 w-7
+                  items-center justify-center
+                  rounded-lg
+                  bg-[#1dabff]/10
+                  text-base
+                  text-[#1dabff]
+                  transition
+                  group-hover:bg-[#1dabff]
+                  group-hover:text-white
+                "
+              >
+                ✎
               </span>
 
-              Dashboard
+              <div className="min-w-0">
+
+                <div>
+                  Website-Inhalte
+                </div>
+
+                <div className="mt-0.5 text-[10px] font-normal text-gray-400">
+                  Texte bearbeiten
+                </div>
+
+              </div>
+
             </Link>
 
-            {/* Referenzen */}
+            {/* =================================================
+                REFERENZEN
+            ================================================= */}
 
             <Link
               href="/admin/referenzen"
               className="
-                flex
-                items-center
-                gap-3
+                flex items-center gap-3
                 rounded-xl
-                px-4
-                py-3
-                text-sm
-                font-medium
+                px-4 py-3
+                text-sm font-medium
                 text-gray-700
                 transition
                 hover:bg-gray-100
                 hover:text-black
               "
             >
-              <span className="flex h-6 w-6 items-center justify-center">
+
+              <span className="flex h-6 w-6 items-center justify-center text-lg">
                 ▧
               </span>
 
-              Referenzen
+              <span>
+                Referenzen
+              </span>
+
             </Link>
 
-            {/* Kategorien */}
+            {/* =================================================
+                KATEGORIEN
+            ================================================= */}
 
             <Link
               href="/admin/kategorien"
               className="
-                flex
-                items-center
-                gap-3
+                flex items-center gap-3
                 rounded-xl
-                px-4
-                py-3
-                text-sm
-                font-medium
+                px-4 py-3
+                text-sm font-medium
                 text-gray-700
                 transition
                 hover:bg-gray-100
                 hover:text-black
               "
             >
-              <span className="flex h-6 w-6 items-center justify-center">
+
+              <span className="flex h-6 w-6 items-center justify-center text-lg">
                 ☷
               </span>
 
-              Kategorien
+              <span>
+                Kategorien
+              </span>
+
             </Link>
 
-            {/* News */}
+            {/* =================================================
+                NEWS
+            ================================================= */}
 
             <Link
               href="/admin/news"
               className="
-                flex
-                items-center
-                gap-3
+                flex items-center gap-3
                 rounded-xl
-                px-4
-                py-3
-                text-sm
-                font-medium
+                px-4 py-3
+                text-sm font-medium
                 text-gray-700
                 transition
                 hover:bg-gray-100
                 hover:text-black
               "
             >
-              <span className="flex h-6 w-6 items-center justify-center">
+
+              <span className="flex h-6 w-6 items-center justify-center text-lg">
                 ◫
               </span>
 
-              News
+              <span>
+                News
+              </span>
+
             </Link>
 
           </div>
 
         </nav>
 
-        {/* =================================================
-            FOOTER SIDEBAR
-        ================================================= */}
+        {/* =====================================================
+            SIDEBAR FOOTER
+        ===================================================== */}
 
         <div className="border-t p-4">
 
-          {/* Website */}
+          {/* =================================================
+              WEBSITE ÖFFNEN
+          ================================================= */}
 
           <Link
             href="/"
             target="_blank"
             className="
               mb-2
-              flex
-              items-center
-              gap-3
+              flex items-center gap-3
               rounded-xl
-              px-4
-              py-3
-              text-sm
-              font-medium
+              px-4 py-3
+              text-sm font-medium
               text-gray-600
               transition
               hover:bg-gray-100
               hover:text-black
             "
           >
-            <span className="flex h-6 w-6 items-center justify-center">
+
+            <span className="flex h-6 w-6 items-center justify-center text-lg">
               ↗
             </span>
 
-            Website öffnen
+            <span>
+              Website öffnen
+            </span>
+
           </Link>
 
-          {/* Benutzer */}
+          {/* =================================================
+              USER
+          ================================================= */}
 
-          <div className="mb-2 truncate px-4 text-xs text-gray-400">
-            {user.email}
-          </div>
+          {user && (
+            <div className="mb-2 truncate px-4 text-xs text-gray-400">
+              {user.email}
+            </div>
+          )}
 
-          {/* Logout */}
+          {/* =================================================
+              LOGOUT
+          ================================================= */}
 
           <AdminLogout />
 
@@ -229,7 +273,17 @@ export default async function AdminLayout({
           MOBILE HEADER
       ===================================================== */}
 
-      <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-white px-5 lg:hidden">
+      <div
+        className="
+          sticky top-0 z-30
+          flex h-16
+          items-center
+          border-b
+          bg-white
+          px-5
+          lg:hidden
+        "
+      >
 
         <Link href="/admin">
 
@@ -254,4 +308,3 @@ export default async function AdminLayout({
     </div>
   )
 }
-
