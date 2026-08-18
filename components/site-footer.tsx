@@ -35,7 +35,7 @@ export default function SiteFooter() {
             ================================================= */}
 
             <p>
-              © {new Date().getFullYear()} Mysan Jeitziner
+              © {new Date().getFullYear()} mysan Jeitziner GmbH
             </p>
 
             {/* =================================================

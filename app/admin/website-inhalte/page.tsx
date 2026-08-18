@@ -50,12 +50,7 @@ const pages = [
     description: 'Unternehmensangaben und rechtliche Informationen',
     icon: '§',
   },
-  {
-    slug: 'footer',
-    title: 'Footer',
-    description: 'Texte und Links im Footer',
-    icon: '▾',
-  },
+  
 ]
 
 type SiteContentCount = {
