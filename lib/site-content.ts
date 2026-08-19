@@ -34,11 +34,9 @@ export type PageMedia = {
   updated_at: string
 }
 
-/*
-=========================================================
-WEBSITE-TEXTE
-=========================================================
-*/
+/* =========================================================
+   WEBSITE-TEXTE
+   ========================================================= */
 
 export async function getSiteContent(
   page?: string
@@ -78,11 +76,14 @@ export async function getSiteContent(
   return (data as SiteContent[]) || []
 }
 
-/*
-=========================================================
-EINZELNEN CONTENT HOLEN
-=========================================================
-*/
+/* =========================================================
+   EINZELNEN CONTENT HOLEN
+
+   Verhalten:
+   - kein DB-Eintrag       → Fallback
+   - DB-Eintrag sichtbar   → Inhalt
+   - DB-Eintrag unsichtbar → leer
+   ========================================================= */
 
 export function getContent(
   contents: SiteContent[],
@@ -96,18 +97,22 @@ export function getContent(
       content.content_key === key
   )
 
-  if (!item || !item.visible) {
+  // Kein Eintrag vorhanden
+  if (!item) {
     return fallback
+  }
+
+  // Eintrag vorhanden, aber deaktiviert
+  if (!item.visible) {
+    return ''
   }
 
   return item.content.replace(/\\n/g, '\n')
 }
 
-/*
-=========================================================
-PAGE MEDIA
-=========================================================
-*/
+/* =========================================================
+   PAGE MEDIA
+   ========================================================= */
 
 export async function getPageMedia(
   page: SitePage,
@@ -145,11 +150,9 @@ export async function getPageMedia(
   return data as PageMedia | null
 }
 
-/*
-=========================================================
-STORAGE URL
-=========================================================
-*/
+/* =========================================================
+   STORAGE URL
+   ========================================================= */
 
 export function getStorageUrl(
   storagePath: string | null | undefined
@@ -185,11 +188,9 @@ export function getStorageUrl(
   return `${supabaseUrl}/storage/v1/object/public/${SITE_MEDIA_BUCKET}/${path}`
 }
 
-/*
-=========================================================
-MEDIA URL
-=========================================================
-*/
+/* =========================================================
+   MEDIA URL
+   ========================================================= */
 
 export function getMediaUrl(
   media: PageMedia | null
@@ -207,11 +208,9 @@ export function getMediaUrl(
   )
 }
 
-/*
-=========================================================
-HERO
-=========================================================
-*/
+/* =========================================================
+   HERO
+   ========================================================= */
 
 export async function getHeroMedia(
   page: SitePage

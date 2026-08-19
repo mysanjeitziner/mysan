@@ -153,95 +153,125 @@ export default function WebsiteContentEditor({
      EINEN EINTRAG SPEICHERN
   ========================================================= */
 
-  async function saveContent(
-    item: SiteContent
-  ) {
-    setSavingId(item.id)
+async function saveContent(item: SiteContent) {
+  setSavingId(item.id)
+  setMessage('')
+  setErrorMessage('')
 
-    setMessage('')
-    setErrorMessage('')
-
-    const { error } = await supabase
+  try {
+    const { data, error } = await supabase
       .from('site_content')
       .update({
         content: item.content,
         visible: item.visible,
-        updated_at: new Date().toISOString(),
       })
       .eq('id', item.id)
+      .select()
+      .single()
 
     if (error) {
-      console.error(error)
+      console.error('SUPABASE SAVE ERROR:', error)
 
       setErrorMessage(
         `Fehler beim Speichern: ${error.message}`
       )
 
-      setSavingId(null)
+      return
+    }
+
+    if (!data) {
+      setErrorMessage(
+        'Der Inhalt wurde nicht gespeichert. Es wurde kein Datensatz geändert.'
+      )
 
       return
     }
 
-    setMessage(
-      `"${getContentName(
-        item.content_key
-      )}" wurde gespeichert.`
+    // Lokalen Zustand mit den tatsächlich gespeicherten
+    // Daten aktualisieren
+    setContents((current) =>
+      current.map((content) =>
+        content.id === item.id
+          ? {
+              ...content,
+              content: data.content,
+              visible: data.visible,
+            }
+          : content
+      )
     )
 
+    setMessage(
+      `"${getContentName(item.content_key)}" wurde erfolgreich gespeichert.`
+    )
+
+  } catch (error) {
+    console.error('SAVE ERROR:', error)
+
+    setErrorMessage(
+      error instanceof Error
+        ? error.message
+        : 'Die Inhalte konnten nicht gespeichert werden.'
+    )
+  } finally {
     setSavingId(null)
-
-    router.refresh()
   }
-
+}
   /* =========================================================
      ALLE SPEICHERN
   ========================================================= */
 
-  async function saveAll() {
-    setSavingId('all')
-    setMessage('')
-    setErrorMessage('')
+async function saveAll() {
+  setSavingId('all')
+  setMessage('')
+  setErrorMessage('')
 
-    try {
+  try {
+    for (const item of contents) {
+      const { data, error } = await supabase
+        .from('site_content')
+        .update({
+          content: item.content,
+          visible: item.visible,
+        })
+        .eq('id', item.id)
+        .select()
+        .single()
 
-      for (const item of contents) {
+      if (error) {
+        console.error(
+          `Fehler bei ${item.content_key}:`,
+          error
+        )
 
-        const { error } = await supabase
-          .from('site_content')
-          .update({
-            content: item.content,
-            visible: item.visible,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', item.id)
-
-        if (error) {
-          throw error
-        }
+        throw new Error(
+          `${getContentName(item.content_key)}: ${error.message}`
+        )
       }
 
-      setMessage(
-        'Alle Website-Inhalte wurden gespeichert.'
-      )
-
-      router.refresh()
-
-    } catch (error) {
-
-      console.error(error)
-
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : 'Die Inhalte konnten nicht gespeichert werden.'
-      )
-
-    } finally {
-
-      setSavingId(null)
-
+      if (!data) {
+        throw new Error(
+          `${getContentName(item.content_key)} wurde nicht geändert.`
+        )
+      }
     }
+
+    setMessage(
+      'Alle Website-Inhalte wurden erfolgreich gespeichert.'
+    )
+
+  } catch (error) {
+    console.error('SAVE ALL ERROR:', error)
+
+    setErrorMessage(
+      error instanceof Error
+        ? error.message
+        : 'Die Inhalte konnten nicht gespeichert werden.'
+    )
+  } finally {
+    setSavingId(null)
   }
+}
 
   /* =========================================================
      NAMEN
