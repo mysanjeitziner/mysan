@@ -1,906 +1,308 @@
-import Link from 'next/link'
-import PageHero from '@/components/page-hero'
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
-import {
-  getSiteContent,
-  getContent,
-  getStorageUrl,
-} from '@/lib/site-content'
-
-import { createClient } from '@/lib/supabase/server'
-
-const MYSAN_BLUE = '#1dabff'
-
-/* =========================================================
-   TYPES
-========================================================= */
+type Category = {
+  id: string;
+  name: string;
+};
 
 type Reference = {
-  id: string
-  title: string
-  slug: string
-  location?: string | null
-  year?: number | null
-  published?: boolean
-  featured?: boolean
-  created_at?: string
-}
+  id: string;
+  title: string;
+  slug: string;
+  location: string | null;
+  year: number | null;
+  published: boolean;
+  featured: boolean;
+  created_at: string;
+  categories: Category | Category[] | null;
+};
 
-type ReferenceImage = {
-  id: string
-  reference_id: string
-  image_url: string | null
-  sort_order?: number | null
-}
+const BLUE = "#1dabff";
 
-/* =========================================================
-   PAGE
-========================================================= */
+export default async function AdminReferenzenPage() {
+  const supabase = await createClient();
 
-export default async function ReferenzenPage() {
-
-  const supabase = await createClient()
-
-  /* =========================================================
-     CONTENT
-  ========================================================= */
-
-  const contents =
-    await getSiteContent('referenzen')
-
-
-  /* =========================================================
-     HERO TEXTE
-  ========================================================= */
-
-  const heroEyebrow =
-    getContent(
-      contents,
-      'hero',
-      'eyebrow',
-      'mySan Jeitziner GmbH'
-    )
-
-  const heroTitle =
-    getContent(
-      contents,
-      'hero',
-      'title',
-      'Unsere\nReferenzen'
-    ) || ''
-
-  const heroDescription =
-    getContent(
-      contents,
-      'hero',
-      'description',
-      'Einblick in ausgewählte Projekte und Arbeiten von mySan Jeitziner GmbH.'
-    )
-
-
-  /* =========================================================
-     HERO BILD
-  ========================================================= */
-
-  const heroImagePath =
-    getContent(
-      contents,
-      'hero',
-      'image',
-      'hero/referenzen.jpg'
-    )
-
-  const heroImage =
-    getStorageUrl(
-      heroImagePath
-    ) || '/badewanne.jpg'
-
-
-  /* =========================================================
-     PROJEKTE TEXTE
-  ========================================================= */
-
-  const projectsEyebrow =
-    getContent(
-      contents,
-      'projects',
-      'eyebrow',
-      'Projekte'
-    )
-
-  const projectsTitle =
-    getContent(
-      contents,
-      'projects',
-      'title',
-      'Sanitärarbeiten mit Qualität'
-    )
-
-  const emptyText =
-    getContent(
-      contents,
-      'projects',
-      'empty',
-      'Aktuell sind keine Referenzen veröffentlicht.'
-    ) || ''
-
-
-  /* =========================================================
-     KONTAKT
-  ========================================================= */
-
-  const contactEyebrow =
-    getContent(
-      contents,
-      'contact',
-      'eyebrow',
-      'Kontakt'
-    )
-
-  const contactTitle =
-    getContent(
-      contents,
-      'contact',
-      'title',
-      'Sie haben ein Projekt?'
-    )
-
-  const contactText =
-    getContent(
-      contents,
-      'contact',
-      'text',
-      'Wir freuen uns über Ihre Kontaktaufnahme.'
-    )
-
-  const contactButton =
-    getContent(
-      contents,
-      'contact',
-      'button',
-      'Kontakt aufnehmen'
-    )
-
-
-  /* =========================================================
-     REFERENZEN LADEN
-  ========================================================= */
-
+  // Anmeldung prüfen
   const {
-    data: referencesData,
-    error: referencesError,
-  } =
-    await supabase
-      .from('references')
-      .select(`
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    redirect("/admin/login");
+  }
+
+  // Referenzen aus Supabase laden
+  const { data, error } = await supabase
+    .from("references")
+    .select(`
+      id,
+      title,
+      slug,
+      location,
+      year,
+      published,
+      featured,
+      created_at,
+      categories (
         id,
-        title,
-        slug,
-        location,
-        year,
-        published,
-        featured,
-        created_at
-      `)
-      .eq(
-        'published',
-        true
+        name
       )
-      .order(
-        'created_at',
-        {
-          ascending: false,
-        }
-      )
+    `)
+    .order("created_at", { ascending: false });
 
-  const references =
-    (referencesData as Reference[] | null) || []
+  const references = (data ?? []) as Reference[];
 
+  const publishedCount = references.filter(
+    (item) => item.published
+  ).length;
 
-  /* =========================================================
-     REFERENZ BILDER LADEN
-  ========================================================= */
-
-  const referenceIds =
-    references.map(
-      (reference) =>
-        reference.id
-    )
-
-  let referenceImages:
-    ReferenceImage[] = []
-
-  if (
-    referenceIds.length > 0
-  ) {
-
-    const {
-      data: imagesData,
-      error: imagesError,
-    } =
-      await supabase
-        .from('reference_images')
-        .select(`
-          id,
-          reference_id,
-          image_url,
-          sort_order
-        `)
-        .in(
-          'reference_id',
-          referenceIds
-        )
-        .order(
-          'sort_order',
-          {
-            ascending: true,
-          }
-        )
-
-    if (imagesError) {
-
-      console.error(
-        'REFERENZ BILDER FEHLER:',
-        imagesError
-      )
-
-    }
-
-    referenceImages =
-      (imagesData as ReferenceImage[] | null) || []
-  }
-
-
-  /* =========================================================
-     BILD ZUR REFERENZ
-     
-     WICHTIG:
-     
-     Die image_url aus Supabase wird genauso verwendet
-     wie bei NEWS.
-
-     Beispiel:
-
-     https://jkuysvbbsxfbuqmxqfaw.supabase.co/storage/v1/object/public/images/references/...
-
-     Diese URL wird NICHT verändert.
-  ========================================================= */
-
-  function getReferenceImage(
-    referenceId: string
-  ): string | null {
-
-    const image =
-      referenceImages.find(
-        (item) =>
-          item.reference_id ===
-          referenceId
-      )
-
-    if (
-      !image?.image_url
-    ) {
-      return null
-    }
-
-    return image.image_url
-  }
-
-
-  /* =========================================================
-     DEBUG
-     
-     Damit im Terminal sichtbar ist, welche Bilder geladen
-     werden.
-  ========================================================= */
-
-  console.log(
-    'REFERENZEN:',
-    references.map(
-      (reference) => ({
-        id: reference.id,
-        title: reference.title,
-        image: getReferenceImage(
-          reference.id
-        ),
-      })
-    )
-  )
-
-
-  /* =========================================================
-     HERO TITEL
-  ========================================================= */
-
-  const heroTitleLines =
-    heroTitle.split('\n')
-
-
-  /* =========================================================
-     RENDER
-  ========================================================= */
+  const draftCount = references.filter(
+    (item) => !item.published
+  ).length;
 
   return (
+    <main className="min-h-screen bg-[#F4F7FA] text-[#222222]">
+      <div className="mx-auto max-w-7xl px-5 py-8 md:px-10 md:py-12">
 
-    <main className="bg-white text-neutral-900">
-
-
-      {/* =====================================================
-          HERO
-      ===================================================== */}
-
-      <PageHero
-
-        eyebrow={
-          heroEyebrow
-        }
-
-        title={
-          <>
-            {heroTitleLines.map(
-              (
-                line,
-                index
-              ) => (
-
-                <span
-                  key={index}
-                >
-
-                  {index > 0 && (
-                    <br />
-                  )}
-
-                  {index === 1 ? (
-
-                    <span
-                      style={{
-                        color:
-                          MYSAN_BLUE,
-                      }}
-                    >
-                      {line}
-                    </span>
-
-                  ) : (
-
-                    line
-
-                  )}
-
-                </span>
-
-              )
-            )}
-          </>
-        }
-
-        description={
-          heroDescription
-        }
-
-        image={
-          heroImage
-        }
-
-        imageOpacity={
-          0.40
-        }
-
-      />
-
-
-      {/* =====================================================
-          REFERENZEN
-      ===================================================== */}
-
-      <section
-        className="
-          relative
-          overflow-hidden
-          bg-white
-        "
-      >
-
-        {/* Blauer Rand */}
-
-        <div
-          className="
-            absolute
-            left-0
-            top-0
-            h-full
-            w-2
-          "
-          style={{
-            backgroundColor:
-              MYSAN_BLUE,
-          }}
-        />
-
-
-        <div
-          className="
-            mx-auto
-            max-w-7xl
-            px-8
-            pb-14
-            pt-6
-            md:px-12
-            md:pb-18
-            md:pt-8
-            lg:px-16
-          "
-        >
-
-
-          {/* =================================================
-              ÜBERSCHRIFT
-          ================================================= */}
-
-          <div className="mb-8">
-
+        {/* HEADER */}
+        <header className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
             <p
-              className="
-                text-xs
-                font-semibold
-                uppercase
-                tracking-[0.2em]
-              "
-              style={{
-                color:
-                  MYSAN_BLUE,
-              }}
+              className="mb-2 text-xs font-semibold uppercase tracking-[0.2em]"
+              style={{ color: BLUE }}
             >
-              {projectsEyebrow}
+              mySan Jeitziner · Admin
             </p>
 
+            <h1 className="text-3xl font-light tracking-tight md:text-4xl">
+              Referenzen
+            </h1>
 
-            <h2
-              className="
-                mt-2
-                text-3xl
-                font-light
-                tracking-tight
-                md:text-4xl
-              "
-            >
-              {projectsTitle}
-            </h2>
-
+            <p className="mt-3 text-sm text-gray-500">
+              Verwalte deine Projekte und Referenzen.
+            </p>
           </div>
 
-
-          {/* =================================================
-              FEHLER
-          ================================================= */}
-
-          {referencesError && (
-
-            <div
-              className="
-                mb-6
-                border
-                border-red-200
-                bg-red-50
-                px-6
-                py-5
-                text-sm
-                text-red-700
-              "
-            >
-              Die Referenzen konnten nicht geladen werden.
-            </div>
-
-          )}
-
-
-          {/* =================================================
-              KEINE REFERENZEN
-          ================================================= */}
-
-          {!referencesError &&
-            references.length === 0 && (
-
-              <div
-                className="
-                  border
-                  border-dashed
-                  border-neutral-300
-                  px-6
-                  py-12
-                  text-center
-                  text-sm
-                  text-neutral-500
-                "
-              >
-                {emptyText}
-              </div>
-
-            )}
-
-
-          {/* =================================================
-              REFERENZEN GRID
-          ================================================= */}
-
-          {references.length > 0 && (
-
-            <div
-              className="
-                grid
-                gap-x-6
-                gap-y-10
-                md:grid-cols-2
-                lg:grid-cols-3
-              "
-            >
-
-              {references.map(
-                (
-                  reference
-                ) => {
-
-                  const image =
-                    getReferenceImage(
-                      reference.id
-                    )
-
-                  return (
-
-                    <Link
-                      key={
-                        reference.id
-                      }
-                      href={`/referenzen/${reference.slug}`}
-                      className="
-                        group
-                        block
-                      "
-                    >
-
-
-                      {/* =====================================
-                          BILD
-                      ===================================== */}
-
-                      <div
-                        className="
-                          relative
-                          aspect-[4/3]
-                          overflow-hidden
-                          bg-[#F4F7FA]
-                        "
-                      >
-
-                        {image ? (
-
-                          <img
-                            src={
-                              image
-                            }
-                            alt={
-                              reference.title
-                            }
-                            loading="lazy"
-                            className="
-                              h-full
-                              w-full
-                              object-cover
-                              transition
-                              duration-700
-                              group-hover:scale-105
-                            "
-                          />
-
-                        ) : (
-
-                          <div
-                            className="
-                              flex
-                              h-full
-                              w-full
-                              items-center
-                              justify-center
-                              bg-[#F4F7FA]
-                              text-sm
-                              text-neutral-400
-                            "
-                          >
-                            Kein Bild vorhanden
-                          </div>
-
-                        )}
-
-                      </div>
-
-
-                      {/* =====================================
-                          TEXT
-                      ===================================== */}
-
-                      <div
-                        className="
-                          relative
-                          border-b
-                          border-neutral-200
-                          pb-5
-                          pt-4
-                        "
-                      >
-
-                        {/* Blauer Rand */}
-
-                        <div
-                          className="
-                            absolute
-                            left-0
-                            top-0
-                            h-full
-                            w-1
-                          "
-                          style={{
-                            backgroundColor:
-                              MYSAN_BLUE,
-                          }}
-                        />
-
-
-                        <div
-                          className="
-                            pl-4
-                          "
-                        >
-
-                          {/* Wassertropfen */}
-
-                          <div
-                            className="
-                              mb-3
-                              flex
-                              h-7
-                              w-7
-                              items-center
-                            "
-                            style={{
-                              color:
-                                MYSAN_BLUE,
-                            }}
-                          >
-
-                            <svg
-                              viewBox="0 0 24 24"
-                              className="
-                                h-6
-                                w-6
-                              "
-                              fill="currentColor"
-                              aria-hidden="true"
-                            >
-
-                              <path
-                                d="
-                                  M12 2.5
-                                  C12 2.5 5.5 10.1 5.5 15.2
-                                  C5.5 19.2 8.4 22 12 22
-                                  S18.5 19.2 18.5 15.2
-                                  C18.5 10.1 12 2.5 12 2.5Z
-                                "
-                              />
-
-                            </svg>
-
-                          </div>
-
-
-                          {/* Titel */}
-
-                          <h3
-                            className="
-                              text-xl
-                              font-light
-                              transition-colors
-                              duration-200
-                              group-hover:text-[#1dabff]
-                            "
-                          >
-                            {
-                              reference.title
-                            }
-                          </h3>
-
-
-                          {/* Ort / Jahr */}
-
-                          {(
-                            reference.location ||
-                            reference.year
-                          ) && (
-
-                            <p
-                              className="
-                                mt-1.5
-                                text-sm
-                                text-neutral-500
-                              "
-                            >
-
-                              {
-                                reference.location
-                              }
-
-                              {reference.location &&
-                                reference.year &&
-                                ' · '}
-
-                              {
-                                reference.year
-                              }
-
-                            </p>
-
-                          )}
-
-                        </div>
-
-                      </div>
-
-                    </Link>
-
-                  )
-
-                }
-              )}
-
-            </div>
-
-          )}
-
-        </div>
-
-      </section>
-
-
-      {/* =====================================================
-          KONTAKT
-      ===================================================== */}
-
-      <section
-        className="
-          relative
-          overflow-hidden
-        "
-        style={{
-          backgroundColor:
-            MYSAN_BLUE,
-        }}
-      >
-
-        <div
-          className="
-            mx-auto
-            max-w-7xl
-            px-8
-            py-12
-            md:px-12
-            md:py-14
-            lg:px-16
-          "
-        >
-
-          <div
-            className="
-              flex
-              flex-col
-              gap-6
-              md:flex-row
-              md:items-center
-              md:justify-between
-            "
+          <Link
+            href="/admin/referenzen/neu"
+            className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+            style={{ backgroundColor: BLUE }}
           >
+            <span className="text-lg">+</span>
+            Neue Referenz
+          </Link>
+        </header>
 
+        {/* STATISTIKEN */}
+        <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Referenzen gesamt"
+            value={references.length}
+          />
+
+          <StatCard
+            label="Veröffentlicht"
+            value={publishedCount}
+            color="text-green-600"
+          />
+
+          <StatCard
+            label="Entwürfe"
+            value={draftCount}
+            color="text-amber-600"
+          />
+        </section>
+
+        {/* FEHLERMELDUNG */}
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+            <p className="font-semibold">
+              Die Referenzen konnten nicht geladen werden.
+            </p>
+            <p className="mt-2">{error.message}</p>
+          </div>
+        )}
+
+        {/* REFERENZLISTE */}
+        <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+
+          <div className="flex flex-col gap-2 border-b border-gray-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-
-              {contactEyebrow && (
-
-                <p
-                  className="
-                    text-xs
-                    font-semibold
-                    uppercase
-                    tracking-[0.2em]
-                    text-white/60
-                  "
-                >
-                  {
-                    contactEyebrow
-                  }
-                </p>
-
-              )}
-
-
-              {contactTitle && (
-
-                <h2
-                  className="
-                    mt-2
-                    text-3xl
-                    font-light
-                    text-white
-                    md:text-4xl
-                  "
-                >
-                  {
-                    contactTitle
-                  }
-                </h2>
-
-              )}
-
-
-              {contactText && (
-
-                <p
-                  className="
-                    mt-2
-                    text-sm
-                    text-white/75
-                  "
-                >
-                  {
-                    contactText
-                  }
-                </p>
-
-              )}
-
+              <h2 className="text-lg font-semibold">
+                Alle Referenzen
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                {references.length} Einträge
+              </p>
             </div>
+          </div>
 
+          {!error && references.length === 0 ? (
+            <div className="px-6 py-16 text-center">
+              <div className="mb-4 text-4xl">▧</div>
 
-            {contactButton && (
+              <h3 className="font-semibold">
+                Noch keine Referenzen vorhanden
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Erstelle deine erste Referenz.
+              </p>
 
               <Link
-                href="/kontakt"
-                className="
-                  inline-flex
-                  w-fit
-                  items-center
-                  rounded-full
-                  bg-white
-                  px-6
-                  py-3
-                  text-sm
-                  font-semibold
-                  text-neutral-900
-                  transition
-                  hover:bg-neutral-100
-                "
+                href="/admin/referenzen/neu"
+                className="mt-5 inline-flex rounded-full px-5 py-3 text-sm font-semibold text-white"
+                style={{ backgroundColor: BLUE }}
               >
-
-                {
-                  contactButton
-                }
-
-                <span
-                  className="
-                    ml-3
-                    text-lg
-                  "
-                >
-                  →
-                </span>
-
+                Neue Referenz erstellen
               </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+                  <tr>
+                    <th className="px-6 py-4 font-medium">
+                      Referenz
+                    </th>
+                    <th className="px-6 py-4 font-medium">
+                      Kategorie
+                    </th>
+                    <th className="px-6 py-4 font-medium">
+                      Ort / Jahr
+                    </th>
+                    <th className="px-6 py-4 font-medium">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-right font-medium">
+                      Aktion
+                    </th>
+                  </tr>
+                </thead>
 
-            )}
+                <tbody className="divide-y divide-gray-100">
+                  {references.map((item) => {
+                    const category = Array.isArray(item.categories)
+                      ? item.categories[0]
+                      : item.categories;
 
-          </div>
+                    return (
+                      <tr
+                        key={item.id}
+                        className="transition hover:bg-gray-50"
+                      >
+                        {/* TITEL */}
+                        <td className="px-6 py-5">
+                          <div className="font-semibold text-gray-900">
+                            {item.title}
+                          </div>
 
+                          <div className="mt-1 text-xs text-gray-400">
+                            /referenzen/{item.slug}
+                          </div>
+
+                          {item.featured && (
+                            <span className="mt-2 inline-block rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                              Hervorgehoben
+                            </span>
+                          )}
+                        </td>
+
+                        {/* KATEGORIE */}
+                        <td className="px-6 py-5 text-gray-600">
+                          {category?.name ?? "–"}
+                        </td>
+
+                        {/* ORT / JAHR */}
+                        <td className="px-6 py-5 text-gray-600">
+                          {[item.location, item.year]
+                            .filter(
+                              (value) =>
+                                value !== null &&
+                                value !== undefined &&
+                                value !== ""
+                            )
+                            .join(" · ") || "–"}
+                        </td>
+
+                        {/* STATUS */}
+                        <td className="px-6 py-5">
+                          {item.published ? (
+                            <span className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
+                              <span>●</span>
+                              Veröffentlicht
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
+                              <span>●</span>
+                              Entwurf
+                            </span>
+                          )}
+                        </td>
+
+                        {/* AKTIONEN */}
+                        <td className="px-6 py-5">
+                          <div className="flex items-center justify-end gap-3">
+                            <Link
+                              href={`/referenzen/${item.slug}`}
+                              target="_blank"
+                              className="text-gray-400 transition hover:text-gray-700"
+                              title="Öffentliche Referenz ansehen"
+                              aria-label="Öffentliche Referenz ansehen"
+                            >
+                              ↗
+                            </Link>
+
+                            <Link
+                              href={`/admin/referenzen/${item.slug}`}
+                              className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 font-medium transition hover:border-[#1dabff] hover:text-[#168ed6]"
+                            >
+                              Bearbeiten
+                              <span>→</span>
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {/* FOOTER */}
+        <div className="mt-8">
+          <Link
+            href="/admin"
+            className="text-sm text-gray-500 transition hover:text-[#1dabff]"
+          >
+            ← Zurück zum Admin-Dashboard
+          </Link>
         </div>
-
-      </section>
-
+      </div>
     </main>
-  )
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  color = "text-gray-900",
+}: {
+  label: string;
+  value: number;
+  color?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <p className="text-sm text-gray-500">{label}</p>
+      <p className={`mt-3 text-3xl font-semibold ${color}`}>
+        {value}
+      </p>
+    </div>
+  );
 }
