@@ -197,7 +197,7 @@ export default function NeueNewsPage() {
           </h1>
 
           <p className="mt-2 text-gray-500">
-            Neue Meldung für Mysan Jeitziner erstellen
+            Neue Meldung für mysan Jeitziner GmbH erstellen
           </p>
 
         </div>

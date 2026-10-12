@@ -289,7 +289,7 @@ export default function NeueReferenzPage() {
           </h1>
 
           <p className="mt-2 text-gray-500">
-            Neues Projekt für Mysan Jeitziner erfassen
+            Neues Projekt für mysan Jeitziner GmbH erfassen
           </p>
 
         </div>

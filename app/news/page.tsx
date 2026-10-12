@@ -61,7 +61,7 @@ export default async function NewsPage() {
       contents,
       'hero',
       'eyebrow',
-      'mySan Jeitziner'
+      'mySan Jeitziner GmbH'
     )
 
   const heroTitle =
@@ -85,7 +85,7 @@ export default async function NewsPage() {
       contents,
       'hero',
       'description',
-      'Neuigkeiten, Projekte und Einblicke rund um mySan Jeitziner.'
+      'Neuigkeiten, Projekte und Einblicke rund um mySan Jeitziner GmbH.'
     )
 
 
@@ -193,7 +193,7 @@ export default async function NewsPage() {
 
   const heroImageAlt =
     heroMedia?.alt_text ||
-    'Aktuelles von mySan Jeitziner'
+    'Aktuelles von mySan Jeitziner GmbH'
 
 
   /* =========================================================

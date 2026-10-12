@@ -97,7 +97,7 @@ export default async function HomePage() {
       contents,
       'hero',
       'eyebrow',
-      'mySan Jeitziner'
+      'mySan Jeitziner GmbH'
     ) || ''
 
   const heroTitle =
@@ -219,7 +219,7 @@ export default async function HomePage() {
       contents,
       'intro',
       'eyebrow',
-      'mySan Jeitziner'
+      'mySan Jeitziner GmbH'
     ) || ''
 
   const introTitle =

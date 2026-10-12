@@ -97,7 +97,7 @@ export default function SiteFooter() {
                 href="https://www.instagram.com/mysan_jeitziner?igshid=NTc4MTIwNjQ2YQ=="
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="mySan Jeitziner auf Instagram"
+                aria-label="mySan Jeitziner GmbH auf Instagram"
                 className="
                   inline-flex
                   items-center

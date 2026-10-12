@@ -34,7 +34,7 @@ export default async function AdminLayout({
           >
             <img
               src="/logo.jpg"
-              alt="Mysan Jeitziner"
+              alt="mysan Jeitziner GmbH"
               className="max-h-14 w-auto max-w-[190px]"
             />
           </Link>
@@ -289,7 +289,7 @@ export default async function AdminLayout({
 
           <img
             src="/logo-mysan.svg"
-            alt="Mysan Jeitziner"
+            alt="mysan Jeitziner GmbH"
             className="h-10 w-auto max-w-[160px]"
           />
 

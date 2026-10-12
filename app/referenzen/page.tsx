@@ -79,7 +79,7 @@ export default async function ReferenzenPage() {
       contents,
       'hero',
       'eyebrow',
-      'mySan Jeitziner'
+      'mySan Jeitziner GmbH'
     )
 
   const heroTitle =
@@ -95,7 +95,7 @@ export default async function ReferenzenPage() {
       contents,
       'hero',
       'description',
-      'Einblick in ausgewählte Projekte und Arbeiten von mySan Jeitziner.'
+      'Einblick in ausgewählte Projekte und Arbeiten von mySan Jeitziner GmbH.'
     )
 
 
@@ -200,7 +200,7 @@ export default async function ReferenzenPage() {
 
   const heroImageAlt =
     heroMedia?.alt_text ||
-    'Referenzen von mySan Jeitziner'
+    'Referenzen von mySan Jeitziner GmbH'
 
 
   /* =========================================================

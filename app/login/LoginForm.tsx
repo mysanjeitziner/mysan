@@ -102,7 +102,7 @@ export default function LoginForm() {
         <div className="mb-8 flex justify-center">
           <img
             src="/logo.jpg"
-            alt="mySan Jeitziner"
+            alt="mySan Jeitziner GmbH"
             className="h-auto max-h-20 w-auto max-w-[220px] object-contain"
           />
         </div>
@@ -119,7 +119,7 @@ export default function LoginForm() {
               className="text-xs font-semibold uppercase tracking-[0.2em]"
               style={{ color: MYSAN_BLUE }}
             >
-              mySan Jeitziner
+              mySan Jeitziner GmbH
             </p>
 
             <h1 className="mt-2 text-3xl font-light tracking-tight">

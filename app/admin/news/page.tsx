@@ -48,7 +48,7 @@ export default async function NewsPage() {
             </h1>
 
             <p className="mt-2 text-gray-500">
-              Neuigkeiten und aktuelle Informationen von Mysan Jeitziner
+              Neuigkeiten und aktuelle Informationen von mysan Jeitziner GmbH
             </p>
           </div>
 

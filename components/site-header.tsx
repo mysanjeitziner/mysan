@@ -83,7 +83,7 @@ export default function SiteHeader() {
             >
               <img
                 src="/logo.png"
-                alt="mySan Jeitziner"
+                alt="mySan Jeitziner GmbH"
                 className="h-16 w-auto object-contain"
               />
             </Link>

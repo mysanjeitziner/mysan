@@ -44,7 +44,7 @@ export default function CookiesPage() {
                 color: MYSAN_BLUE,
               }}
             >
-              mySan Jeitziner
+              mySan Jeitziner GmbH
             </p>
 
             {/* TITEL */}

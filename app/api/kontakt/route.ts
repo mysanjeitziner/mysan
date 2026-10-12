@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     }
 
     const { error } = await resend.emails.send({
-      from: 'Website mySan Jeitziner <onboarding@resend.dev>',
+      from: 'Website mySan Jeitziner GmbH <onboarding@resend.dev>',
       to: [process.env.CONTACT_EMAIL || 'info@mysan.ch'],
       replyTo: email,
       subject: `Neue Kontaktanfrage von ${name}${vorname ? ` ${vorname}` : ''}`,

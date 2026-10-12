@@ -52,7 +52,7 @@ export default async function AdminDashboard() {
           </h1>
 
           <p className="mt-2 text-gray-500">
-            Willkommen im Mysan Jeitziner Admin-Bereich.
+            Willkommen im mysan Jeitziner GmbH Admin-Bereich.
           </p>
 
         </div>

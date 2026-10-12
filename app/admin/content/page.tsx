@@ -117,7 +117,7 @@ export default async function AdminContentPage() {
               text-[#1dabff]
             "
           >
-            mySan Jeitziner
+            mySan Jeitziner GmbH
           </p>
 
           <h1

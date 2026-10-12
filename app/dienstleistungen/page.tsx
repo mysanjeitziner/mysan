@@ -152,7 +152,7 @@ export default async function DienstleistungenPage() {
 
   const heroImageAlt =
     heroMedia?.alt_text ||
-    'Sanitär und Dienstleistungen von mySan Jeitziner'
+    'Sanitär und Dienstleistungen von mySan Jeitziner GmbH'
 
 
   const heroImageOpacity =
@@ -220,7 +220,7 @@ export default async function DienstleistungenPage() {
 
   const servicesImageAlt =
     servicesMedia?.alt_text ||
-    'Dienstleistungen von mySan Jeitziner'
+    'Dienstleistungen von mySan Jeitziner GmbH'
 
 
   /* =========================================================
@@ -316,7 +316,7 @@ export default async function DienstleistungenPage() {
     getContent(
       'hero',
       'eyebrow',
-      'mySan Jeitziner'
+      'mySan Jeitziner GmbH'
     )
 
 

@@ -97,7 +97,7 @@ export default async function TeamPage() {
 
   const heroImageAlt =
     heroMedia?.alt_text ||
-    'mySan Jeitziner'
+    'mySan Jeitziner GmbH'
 
   const heroImageOpacity =
     heroMedia?.opacity ?? 0.4
@@ -140,7 +140,7 @@ export default async function TeamPage() {
       contents,
       'hero',
       'eyebrow',
-      'mySan Jeitziner'
+      'mySan Jeitziner GmbH'
     )
 
   const heroTitle =

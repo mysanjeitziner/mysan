@@ -129,7 +129,7 @@ export default async function KontaktPage() {
     contents,
     'hero',
     'eyebrow',
-    'mySan Jeitziner'
+    'mySan Jeitziner GmbH'
   )
 
   const heroTitle = getContent(
@@ -275,7 +275,7 @@ export default async function KontaktPage() {
     contents,
     'cta',
     'eyebrow',
-    'mySan Jeitziner'
+    'mySan Jeitziner GmbH'
   )
 
   const ctaTitle = getContent(

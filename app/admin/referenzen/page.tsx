@@ -58,7 +58,7 @@ export default async function ReferenzenPage() {
       contents,
       'hero',
       'eyebrow',
-      'mySan Jeitziner'
+      'mySan Jeitziner GmbH'
     )
 
   const heroTitle =
@@ -74,7 +74,7 @@ export default async function ReferenzenPage() {
       contents,
       'hero',
       'description',
-      'Einblick in ausgewählte Projekte und Arbeiten von mySan Jeitziner.'
+      'Einblick in ausgewählte Projekte und Arbeiten von mySan Jeitziner GmbH.'
     )
 
 

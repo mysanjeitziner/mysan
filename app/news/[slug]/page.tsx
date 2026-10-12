@@ -195,7 +195,7 @@ export default async function NewsDetailPage({
                 color: MYSAN_BLUE,
               }}
             >
-              mySan Jeitziner · News
+              mySan Jeitziner GmbH · News
             </p>
 
             {/* Datum */}
