@@ -7,7 +7,7 @@ import {
   getStorageUrl,
 } from '@/lib/site-content'
 
-import { createClient } from '@/lib/supabase/server'
+import { sql } from '@/lib/neon'
 
 const MYSAN_BLUE = '#1dabff'
 
@@ -31,44 +31,41 @@ type PageMedia = {
    ========================================================= */
 
 export default async function TeamPage() {
-  const supabase = await createClient()
 
   /* =======================================================
-     WEBSITE-INHALTE
+     WEBSITE-INHALTE AUS NEON
      ======================================================= */
 
   const contents = await getSiteContent('team')
 
   /* =======================================================
-     BILDER AUS PAGE_MEDIA
+     BILDER AUS NEON: PAGE_MEDIA
      ======================================================= */
 
-  const {
-    data: mediaData,
-    error: mediaError,
-  } = await supabase
-    .from('page_media')
-    .select(`
-      id,
-      page,
-      media_type,
-      storage_path,
-      public_url,
-      alt_text,
-      opacity,
-      visible
-    `)
-    .eq('page', 'team')
+  let media: PageMedia[] = []
 
-  if (mediaError) {
+  try {
+    const mediaData = await sql`
+      SELECT
+        id,
+        page,
+        media_type,
+        storage_path,
+        public_url,
+        alt_text,
+        opacity,
+        visible
+      FROM public.page_media
+      WHERE page = ${'team'}
+    `
+
+    media = mediaData as PageMedia[]
+  } catch (error) {
     console.error(
-      'Fehler beim Laden der Team-Medien:',
-      mediaError
+      'Fehler beim Laden der Team-Medien aus Neon:',
+      error
     )
   }
-
-  const media =
-    (mediaData as PageMedia[] | null) || []
 
   /* =======================================================
      HERO-BILD
@@ -85,19 +82,13 @@ export default async function TeamPage() {
     heroMedia?.public_url ||
     (
       heroMedia?.storage_path
-        ? getStorageUrl(
-            heroMedia.storage_path
-          )
+        ? getStorageUrl(heroMedia.storage_path)
         : null
     )
 
   const heroImage =
     heroImageFromDatabase ||
     '/wir.jpg'
-
-  const heroImageAlt =
-    heroMedia?.alt_text ||
-    'mySan Jeitziner GmbH'
 
   const heroImageOpacity =
     heroMedia?.opacity ?? 0.4
@@ -117,9 +108,7 @@ export default async function TeamPage() {
     teamMedia?.public_url ||
     (
       teamMedia?.storage_path
-        ? getStorageUrl(
-            teamMedia.storage_path
-          )
+        ? getStorageUrl(teamMedia.storage_path)
         : null
     )
 
@@ -350,9 +339,7 @@ export default async function TeamPage() {
   return (
     <main className="min-h-screen bg-white text-neutral-900">
 
-      {/* =====================================================
-          HERO
-      ===================================================== */}
+      {/* HERO */}
 
       <PageHero
         eyebrow={heroEyebrow}
@@ -381,8 +368,7 @@ export default async function TeamPage() {
         <div
           className="absolute left-0 top-0 h-full w-2"
           style={{
-            backgroundColor:
-              MYSAN_BLUE,
+            backgroundColor: MYSAN_BLUE,
           }}
         />
 
@@ -390,9 +376,7 @@ export default async function TeamPage() {
 
           <div className="grid gap-12 md:grid-cols-[0.85fr_1.15fr] md:items-center">
 
-            {/* =================================================
-                LINKE SEITE
-            ================================================= */}
+            {/* LINKE SEITE */}
 
             <div>
 
@@ -400,8 +384,7 @@ export default async function TeamPage() {
                 <p
                   className="text-xs font-semibold uppercase tracking-[0.2em]"
                   style={{
-                    color:
-                      MYSAN_BLUE,
+                    color: MYSAN_BLUE,
                   }}
                 >
                   {teamEyebrow}
@@ -414,9 +397,7 @@ export default async function TeamPage() {
                 </h2>
               )}
 
-              {/* =================================================
-                  TEAM-BILD AUS SUPABASE
-              ================================================= */}
+              {/* TEAM-BILD */}
 
               <div className="mt-8 overflow-hidden rounded-xl shadow-[0_12px_35px_rgba(0,0,0,0.12)]">
 
@@ -436,9 +417,7 @@ export default async function TeamPage() {
 
             </div>
 
-            {/* =================================================
-                RECHTE SEITE
-            ================================================= */}
+            {/* RECHTE SEITE */}
 
             <div className="flex items-center">
 
@@ -500,8 +479,7 @@ export default async function TeamPage() {
           <div
             className="absolute left-0 top-0 h-full w-2"
             style={{
-              backgroundColor:
-                MYSAN_BLUE,
+              backgroundColor: MYSAN_BLUE,
             }}
           />
 
@@ -537,8 +515,7 @@ export default async function TeamPage() {
         <div
           className="absolute left-0 top-0 h-full w-2"
           style={{
-            backgroundColor:
-              MYSAN_BLUE,
+            backgroundColor: MYSAN_BLUE,
           }}
         />
 
@@ -574,8 +551,7 @@ export default async function TeamPage() {
       <section
         className="relative overflow-hidden"
         style={{
-          backgroundColor:
-            MYSAN_BLUE,
+          backgroundColor: MYSAN_BLUE,
         }}
       >
 
@@ -645,16 +621,14 @@ function TeamValue({
       <div
         className="absolute left-0 top-0 h-full w-1"
         style={{
-          backgroundColor:
-            MYSAN_BLUE,
+          backgroundColor: MYSAN_BLUE,
         }}
       />
 
       <div
         className="flex h-8 w-8 items-center justify-center"
         style={{
-          color:
-            MYSAN_BLUE,
+          color: MYSAN_BLUE,
         }}
       >
 

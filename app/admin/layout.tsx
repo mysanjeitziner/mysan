@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { getAdminUser } from '@/lib/auth-admin'
 import AdminLogout from './AdminLogout'
 
 export default async function AdminLayout({
@@ -7,11 +8,11 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
+  const user = await getAdminUser()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  if (!user) {
+    redirect('/login')
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -22,12 +23,9 @@ export default async function AdminLayout({
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r bg-white lg:flex lg:flex-col">
 
-        {/* =====================================================
-            LOGO
-        ===================================================== */}
+        {/* LOGO */}
 
         <div className="flex h-24 items-center border-b px-6">
-
           <Link
             href="/admin"
             className="flex items-center"
@@ -38,12 +36,9 @@ export default async function AdminLayout({
               className="max-h-14 w-auto max-w-[190px]"
             />
           </Link>
-
         </div>
 
-        {/* =====================================================
-            NAVIGATION
-        ===================================================== */}
+        {/* NAVIGATION */}
 
         <nav className="flex-1 overflow-y-auto p-4">
 
@@ -53,9 +48,7 @@ export default async function AdminLayout({
 
           <div className="space-y-1">
 
-            {/* =================================================
-                DASHBOARD
-            ================================================= */}
+            {/* DASHBOARD */}
 
             <Link
               href="/admin"
@@ -70,15 +63,10 @@ export default async function AdminLayout({
               <span className="flex h-6 w-6 items-center justify-center text-lg">
                 ▦
               </span>
-
-              <span>
-                Dashboard
-              </span>
+              <span>Dashboard</span>
             </Link>
 
-            {/* =================================================
-                WEBSITE-INHALTE
-            ================================================= */}
+            {/* WEBSITE-INHALTE */}
 
             <Link
               href="/admin/website-inhalte"
@@ -94,7 +82,6 @@ export default async function AdminLayout({
                 hover:text-black
               "
             >
-
               <span
                 className="
                   flex h-7 w-7
@@ -112,22 +99,15 @@ export default async function AdminLayout({
               </span>
 
               <div className="min-w-0">
-
-                <div>
-                  Website-Inhalte
-                </div>
+                <div>Website-Inhalte</div>
 
                 <div className="mt-0.5 text-[10px] font-normal text-gray-400">
                   Texte bearbeiten
                 </div>
-
               </div>
-
             </Link>
 
-            {/* =================================================
-                REFERENZEN
-            ================================================= */}
+            {/* REFERENZEN */}
 
             <Link
               href="/admin/referenzen"
@@ -142,20 +122,13 @@ export default async function AdminLayout({
                 hover:text-black
               "
             >
-
               <span className="flex h-6 w-6 items-center justify-center text-lg">
                 ▧
               </span>
-
-              <span>
-                Referenzen
-              </span>
-
+              <span>Referenzen</span>
             </Link>
 
-            {/* =================================================
-                KATEGORIEN
-            ================================================= */}
+            {/* KATEGORIEN */}
 
             <Link
               href="/admin/kategorien"
@@ -170,20 +143,13 @@ export default async function AdminLayout({
                 hover:text-black
               "
             >
-
               <span className="flex h-6 w-6 items-center justify-center text-lg">
                 ☷
               </span>
-
-              <span>
-                Kategorien
-              </span>
-
+              <span>Kategorien</span>
             </Link>
 
-            {/* =================================================
-                NEWS
-            ================================================= */}
+            {/* NEWS */}
 
             <Link
               href="/admin/news"
@@ -198,30 +164,20 @@ export default async function AdminLayout({
                 hover:text-black
               "
             >
-
               <span className="flex h-6 w-6 items-center justify-center text-lg">
                 ◫
               </span>
-
-              <span>
-                News
-              </span>
-
+              <span>News</span>
             </Link>
 
           </div>
-
         </nav>
 
-        {/* =====================================================
-            SIDEBAR FOOTER
-        ===================================================== */}
+        {/* SIDEBAR FOOTER */}
 
         <div className="border-t p-4">
 
-          {/* =================================================
-              WEBSITE ÖFFNEN
-          ================================================= */}
+          {/* WEBSITE ÖFFNEN */}
 
           <Link
             href="/"
@@ -238,40 +194,26 @@ export default async function AdminLayout({
               hover:text-black
             "
           >
-
             <span className="flex h-6 w-6 items-center justify-center text-lg">
               ↗
             </span>
-
-            <span>
-              Website öffnen
-            </span>
-
+            <span>Website öffnen</span>
           </Link>
 
-          {/* =================================================
-              USER
-          ================================================= */}
+          {/* USER */}
 
-          {user && (
-            <div className="mb-2 truncate px-4 text-xs text-gray-400">
-              {user.email}
-            </div>
-          )}
+          <div className="mb-2 truncate px-4 text-xs text-gray-400">
+            {user.email}
+          </div>
 
-          {/* =================================================
-              LOGOUT
-          ================================================= */}
+          {/* LOGOUT */}
 
           <AdminLogout />
 
         </div>
-
       </aside>
 
-      {/* =====================================================
-          MOBILE HEADER
-      ===================================================== */}
+      {/* MOBILE HEADER */}
 
       <div
         className="
@@ -284,22 +226,16 @@ export default async function AdminLayout({
           lg:hidden
         "
       >
-
         <Link href="/admin">
-
           <img
             src="/logo-mysan.svg"
             alt="mysan Jeitziner GmbH"
             className="h-10 w-auto max-w-[160px]"
           />
-
         </Link>
-
       </div>
 
-      {/* =====================================================
-          HAUPTINHALT
-      ===================================================== */}
+      {/* HAUPTINHALT */}
 
       <main className="min-h-screen lg:pl-64">
         {children}

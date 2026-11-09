@@ -1,8 +1,7 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 
 type Category = {
   id: string
@@ -28,28 +27,43 @@ function createSlug(text: string) {
     .replace(/^-+|-+$/g, '')
 }
 
+async function requestApi(
+  method: 'POST' | 'PATCH' | 'DELETE',
+  body: Record<string, unknown>
+) {
+  const response = await fetch('/api/admin/kategorien', {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+
+  const result = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(
+      result.error || 'Die Anfrage konnte nicht ausgeführt werden.'
+    )
+  }
+
+  return result
+}
+
 export default function KategorieForm({ category }: Props) {
   const router = useRouter()
-  const supabase = createClient()
-
   const isNew = !category
 
   const [name, setName] = useState(category?.name || '')
   const [sortOrder, setSortOrder] = useState(
     category?.sort_order?.toString() || '0'
   )
-
-  const [active, setActive] = useState(
-    category?.active ?? true
-  )
-
+  const [active, setActive] = useState(category?.active ?? true)
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     setError('')
@@ -59,9 +73,7 @@ export default function KategorieForm({ category }: Props) {
       const cleanName = name.trim()
 
       if (!cleanName) {
-        throw new Error(
-          'Bitte einen Kategorienamen eingeben.'
-        )
+        throw new Error('Bitte einen Kategorienamen eingeben.')
       }
 
       const slug = createSlug(cleanName)
@@ -74,64 +86,42 @@ export default function KategorieForm({ category }: Props) {
 
       const order = Number(sortOrder)
 
-      if (Number.isNaN(order)) {
-        throw new Error(
-          'Die Reihenfolge muss eine Zahl sein.'
-        )
+      if (!Number.isFinite(order)) {
+        throw new Error('Die Reihenfolge muss eine Zahl sein.')
       }
 
       if (isNew) {
-        const { error } = await supabase
-          .from('categories')
-          .insert({
-            name: cleanName,
-            slug,
-            sort_order: order,
-            active,
-          })
-
-        if (error) {
-          throw error
-        }
-
-        setName('')
-        setSortOrder('0')
-        setActive(true)
-
-        router.refresh()
-
-        return
-      }
-
-      const { error } = await supabase
-        .from('categories')
-        .update({
+        await requestApi('POST', {
           name: cleanName,
           slug,
           sort_order: order,
           active,
-          updated_at: new Date().toISOString(),
         })
-        .eq('id', category.id)
 
-      if (error) {
-        throw error
+        setName('')
+        setSortOrder('0')
+        setActive(true)
+      } else {
+        await requestApi('PATCH', {
+          id: category.id,
+          name: cleanName,
+          slug,
+          sort_order: order,
+          active,
+        })
+
+        setEditing(false)
       }
 
-      setEditing(false)
-
       router.refresh()
-
     } catch (err) {
       console.error(err)
 
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError(
-          'Die Kategorie konnte nicht gespeichert werden.'
-        )
-      }
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Die Kategorie konnte nicht gespeichert werden.'
+      )
     } finally {
       setLoading(false)
     }
@@ -143,20 +133,22 @@ export default function KategorieForm({ category }: Props) {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase
-      .from('categories')
-      .update({
+    try {
+      await requestApi('PATCH', {
+        id: category.id,
         active: !category.active,
-        updated_at: new Date().toISOString(),
       })
-      .eq('id', category.id)
 
-    if (error) {
-      setError(error.message)
+      router.refresh()
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Der Status konnte nicht geändert werden.'
+      )
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
-    router.refresh()
   }
 
   async function deleteCategory() {
@@ -171,34 +163,27 @@ export default function KategorieForm({ category }: Props) {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase
-      .from('categories')
-      .delete()
-      .eq('id', category.id)
+    try {
+      await requestApi('DELETE', {
+        id: category.id,
+      })
 
-    if (error) {
+      router.refresh()
+    } catch (err) {
       setError(
-        `Die Kategorie konnte nicht gelöscht werden: ${error.message}`
+        err instanceof Error
+          ? err.message
+          : 'Die Kategorie konnte nicht gelöscht werden.'
       )
-
+    } finally {
       setLoading(false)
-      return
     }
-
-    router.refresh()
   }
 
-  /*
-   * NEUE KATEGORIE
-   */
-
+  // Neue Kategorie
   if (isNew) {
     return (
-      <form
-        onSubmit={handleSubmit}
-        className="mt-6 space-y-5"
-      >
-
+      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         <div>
           <label className="mb-2 block text-sm font-medium">
             Name
@@ -206,9 +191,7 @@ export default function KategorieForm({ category }: Props) {
 
           <input
             value={name}
-            onChange={(event) =>
-              setName(event.target.value)
-            }
+            onChange={(event) => setName(event.target.value)}
             placeholder="z. B. Wärmepumpen"
             className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
             required
@@ -223,9 +206,7 @@ export default function KategorieForm({ category }: Props) {
           <input
             type="number"
             value={sortOrder}
-            onChange={(event) =>
-              setSortOrder(event.target.value)
-            }
+            onChange={(event) => setSortOrder(event.target.value)}
             className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
           />
 
@@ -238,15 +219,11 @@ export default function KategorieForm({ category }: Props) {
           <input
             type="checkbox"
             checked={active}
-            onChange={(event) =>
-              setActive(event.target.checked)
-            }
+            onChange={(event) => setActive(event.target.checked)}
             className="h-5 w-5"
           />
 
-          <span className="text-sm">
-            Kategorie aktiv
-          </span>
+          <span className="text-sm">Kategorie aktiv</span>
         </label>
 
         {error && (
@@ -260,27 +237,18 @@ export default function KategorieForm({ category }: Props) {
           disabled={loading}
           className="w-full rounded-lg bg-black px-5 py-3 font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
-          {loading
-            ? 'Speichern...'
-            : 'Kategorie erstellen'}
+          {loading ? 'Speichern...' : 'Kategorie erstellen'}
         </button>
-
       </form>
     )
   }
 
-  /*
-   * BESTEHENDE KATEGORIE
-   */
-
+  // Vorhandene Kategorie anzeigen
   if (!editing) {
     return (
       <div className="border-b p-6 last:border-b-0">
-
         <div className="flex items-center justify-between gap-4">
-
           <div className="min-w-0">
-
             <div className="flex items-center gap-3">
               <h3 className="truncate font-semibold">
                 {category.name}
@@ -304,15 +272,14 @@ export default function KategorieForm({ category }: Props) {
             <div className="mt-1 text-xs text-gray-400">
               /{category.slug}
             </div>
-
           </div>
 
-          <div className="flex shrink-0 gap-2">
-
+          <div className="flex shrink-0 flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50"
+              disabled={loading}
+              className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
             >
               Bearbeiten
             </button>
@@ -323,9 +290,11 @@ export default function KategorieForm({ category }: Props) {
               disabled={loading}
               className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
             >
-              {category.active
-                ? 'Deaktivieren'
-                : 'Aktivieren'}
+              {loading
+                ? 'Bitte warten...'
+                : category.active
+                  ? 'Deaktivieren'
+                  : 'Aktivieren'}
             </button>
 
             <button
@@ -336,9 +305,7 @@ export default function KategorieForm({ category }: Props) {
             >
               Löschen
             </button>
-
           </div>
-
         </div>
 
         {error && (
@@ -346,23 +313,14 @@ export default function KategorieForm({ category }: Props) {
             {error}
           </div>
         )}
-
       </div>
     )
   }
 
-  /*
-   * BEARBEITEN
-   */
-
+  // Kategorie bearbeiten
   return (
     <div className="border-b bg-gray-50 p-6">
-
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-5"
-      >
-
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label className="mb-2 block text-sm font-medium">
             Name
@@ -370,9 +328,7 @@ export default function KategorieForm({ category }: Props) {
 
           <input
             value={name}
-            onChange={(event) =>
-              setName(event.target.value)
-            }
+            onChange={(event) => setName(event.target.value)}
             className="w-full rounded-lg border bg-white px-4 py-3 outline-none focus:ring-2"
             required
           />
@@ -386,9 +342,7 @@ export default function KategorieForm({ category }: Props) {
           <input
             type="number"
             value={sortOrder}
-            onChange={(event) =>
-              setSortOrder(event.target.value)
-            }
+            onChange={(event) => setSortOrder(event.target.value)}
             className="w-full rounded-lg border bg-white px-4 py-3 outline-none focus:ring-2"
           />
         </div>
@@ -397,15 +351,11 @@ export default function KategorieForm({ category }: Props) {
           <input
             type="checkbox"
             checked={active}
-            onChange={(event) =>
-              setActive(event.target.checked)
-            }
+            onChange={(event) => setActive(event.target.checked)}
             className="h-5 w-5"
           />
 
-          <span className="text-sm">
-            Kategorie aktiv
-          </span>
+          <span className="text-sm">Kategorie aktiv</span>
         </label>
 
         {error && (
@@ -414,16 +364,13 @@ export default function KategorieForm({ category }: Props) {
           </div>
         )}
 
-        <div className="flex gap-3">
-
+        <div className="flex flex-wrap gap-3">
           <button
             type="submit"
             disabled={loading}
             className="rounded-lg bg-black px-5 py-3 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
           >
-            {loading
-              ? 'Speichern...'
-              : 'Änderungen speichern'}
+            {loading ? 'Speichern...' : 'Änderungen speichern'}
           </button>
 
           <button
@@ -431,16 +378,17 @@ export default function KategorieForm({ category }: Props) {
             onClick={() => {
               setEditing(false)
               setError('')
+              setName(category.name)
+              setSortOrder(category.sort_order.toString())
+              setActive(category.active)
             }}
-            className="rounded-lg border bg-white px-5 py-3 text-sm font-medium hover:bg-gray-50"
+            disabled={loading}
+            className="rounded-lg border bg-white px-5 py-3 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
           >
             Abbrechen
           </button>
-
         </div>
-
       </form>
-
     </div>
   )
 }

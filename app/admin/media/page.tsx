@@ -1,10 +1,11 @@
+
+import { redirect } from 'next/navigation'
+
 import PageMediaEditor from '../website-inhalte/PageMediaEditor'
 
-import {
-  getHeroMedia,
-} from '@/lib/site-content'
-
-import { createClient } from '@/lib/supabase/server'
+import { sql } from '@/lib/neon'
+import { getAdminUser } from '@/lib/auth-admin'
+import { getHeroMedia } from '@/lib/site-content'
 
 type PageMedia = {
   id: string
@@ -20,79 +21,65 @@ type PageMedia = {
 }
 
 export default async function AdminMediaPage() {
-  const supabase = await createClient()
+  // Zugriff nur für Administratoren
+  const user = await getAdminUser()
 
-  /* =========================================================
-     HERO-BILDER
-  ========================================================= */
+  if (!user) {
+    redirect('/admin/login')
+  }
 
-  const [
-    home,
-    team,
-    referenzen,
-    news,
-  ] = await Promise.all([
+  /*
+   * HERO-BILDER
+   *
+   * Bestehender Helper aus lib/site-content.
+   */
+  const [home, team, referenzen, news] = await Promise.all([
     getHeroMedia('home'),
     getHeroMedia('team'),
     getHeroMedia('referenzen'),
     getHeroMedia('news'),
   ])
 
-  /* =========================================================
-     DIENSTLEISTUNGEN SERVICES-BILD
-     
-     Wir suchen gezielt:
-     
-     page = dienstleistungen
-     media_type = services
-  ========================================================= */
+  /*
+   * DIENSTLEISTUNGEN – SERVICES-BILD
+   *
+   * Datenbankabfrage über Neon.
+   * Das eigentliche Bild bleibt in Supabase Storage.
+   */
+  let dienstleistungenServices: PageMedia | null = null
 
-  const {
-    data: dienstleistungenServicesData,
-    error: dienstleistungenServicesError,
-  } = await supabase
-    .from('page_media')
-    .select(`
-      id,
-      page,
-      media_type,
-      storage_path,
-      public_url,
-      alt_text,
-      opacity,
-      visible,
-      created_at,
-      updated_at
-    `)
-    .eq('page', 'dienstleistungen')
-    .eq('media_type', 'services')
-    .order('created_at', {
-      ascending: false,
-    })
-    .limit(1)
-    .maybeSingle()
+  try {
+    const result = (await sql`
+      SELECT
+        id,
+        page,
+        media_type,
+        storage_path,
+        public_url,
+        alt_text,
+        opacity,
+        visible,
+        created_at,
+        updated_at
+      FROM public.page_media
+      WHERE page = ${'dienstleistungen'}
+        AND media_type = ${'services'}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `) as PageMedia[]
 
-  const dienstleistungenServices =
-    dienstleistungenServicesData as PageMedia | null
-
-  if (dienstleistungenServicesError) {
+    dienstleistungenServices = result[0] ?? null
+  } catch (error) {
     console.error(
       'DIENSTLEISTUNGEN SERVICES MEDIA ERROR:',
-      dienstleistungenServicesError
+      error
     )
   }
 
   return (
     <main className="min-h-screen bg-[#F4F7FA]">
-
       <div className="mx-auto max-w-6xl px-6 py-10">
-
-        {/* =====================================================
-            HEADER
-        ===================================================== */}
-
         <div className="mb-10">
-
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1dabff]">
             Website
           </p>
@@ -106,15 +93,9 @@ export default async function AdminMediaPage() {
             Seiten verwalten. Bilder werden direkt in
             Supabase Storage gespeichert.
           </p>
-
         </div>
 
         <div className="grid gap-8">
-
-          {/* =================================================
-              HOME
-          ================================================= */}
-
           <PageMediaEditor
             page="home"
             mediaType="hero"
@@ -122,10 +103,6 @@ export default async function AdminMediaPage() {
             description="Das grosse Hintergrundbild der Startseite."
             initialMedia={home}
           />
-
-          {/* =================================================
-              TEAM
-          ================================================= */}
 
           <PageMediaEditor
             page="team"
@@ -135,10 +112,6 @@ export default async function AdminMediaPage() {
             initialMedia={team}
           />
 
-          {/* =================================================
-              REFERENZEN
-          ================================================= */}
-
           <PageMediaEditor
             page="referenzen"
             mediaType="hero"
@@ -146,10 +119,6 @@ export default async function AdminMediaPage() {
             description="Das Hero-Bild der Referenzen-Seite."
             initialMedia={referenzen}
           />
-
-          {/* =================================================
-              NEWS
-          ================================================= */}
 
           <PageMediaEditor
             page="news"
@@ -159,15 +128,6 @@ export default async function AdminMediaPage() {
             initialMedia={news}
           />
 
-          {/* =================================================
-              DIENSTLEISTUNGEN
-              
-              WICHTIG:
-              Dieses Bild ist NICHT das Hero-Bild.
-              Es ist das Bild für den Bereich
-              Dienstleistungen / Da Vinci.
-          ================================================= */}
-
           <PageMediaEditor
             page="dienstleistungen"
             mediaType="services"
@@ -175,11 +135,8 @@ export default async function AdminMediaPage() {
             description="Dieses Bild wird im Bereich der Dienstleistungen verwendet, z. B. das Leonardo-da-Vinci-Bild."
             initialMedia={dienstleistungenServices}
           />
-
         </div>
-
       </div>
-
     </main>
   )
 }

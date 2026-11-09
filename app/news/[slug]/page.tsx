@@ -1,7 +1,7 @@
-
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { sql } from '@/lib/neon'
+import { getStorageUrl } from '@/lib/site-content'
 
 const MYSAN_BLUE = '#1dabff'
 
@@ -14,7 +14,7 @@ type News = {
   image_url?: string | null
   published?: boolean
   featured?: boolean
-  created_at: string
+  created_at: string | Date
 }
 
 type PageProps = {
@@ -28,15 +28,12 @@ export default async function NewsDetailPage({
 }: PageProps) {
   const { slug } = await params
 
-  const supabase = await createClient()
-
   /* =========================================================
-     NEWS AUS SUPABASE
+     NEWS AUS NEON
   ========================================================= */
 
-  const { data: newsData } = await supabase
-    .from('news')
-    .select(`
+  const newsData = await sql`
+    SELECT
       id,
       title,
       slug,
@@ -46,22 +43,31 @@ export default async function NewsDetailPage({
       published,
       featured,
       created_at
-    `)
-    .eq('slug', slug)
-    .eq('published', true)
-    .single()
+    FROM public.news
+    WHERE slug = ${slug}
+      AND published = TRUE
+    LIMIT 1
+  `
 
-  if (!newsData) {
+  const news = newsData[0] as News | undefined
+
+  if (!news) {
     notFound()
   }
 
-  const news = newsData as News
+  /* =========================================================
+     BILDPFAD AUFLÖSEN
+  ========================================================= */
+
+  const imageUrl = news.image_url
+    ? getStorageUrl(news.image_url) || news.image_url
+    : null
 
   /* =========================================================
      DATUM
   ========================================================= */
 
-  function formatDate(date: string) {
+  function formatDate(date: string | Date) {
     return new Intl.DateTimeFormat('de-CH', {
       day: '2-digit',
       month: 'long',
@@ -89,7 +95,7 @@ export default async function NewsDetailPage({
 
         {/* Hintergrundbild */}
 
-        {news.image_url && (
+        {imageUrl && (
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
 
             <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
@@ -104,7 +110,7 @@ export default async function NewsDetailPage({
               >
 
                 <img
-                  src={news.image_url}
+                  src={imageUrl}
                   alt=""
                   aria-hidden="true"
                   className="
@@ -244,7 +250,6 @@ export default async function NewsDetailPage({
 
       </section>
 
-
       {/* =====================================================
           NEWS INHALT
       ===================================================== */}
@@ -275,11 +280,11 @@ export default async function NewsDetailPage({
 
           {/* Hauptbild */}
 
-          {news.image_url && (
+          {imageUrl && (
             <div className="mb-10 overflow-hidden rounded-sm shadow-[0_12px_40px_rgba(0,0,0,0.10)]">
 
               <img
-                src={news.image_url}
+                src={imageUrl}
                 alt={news.title}
                 className="
                   h-auto
@@ -290,7 +295,6 @@ export default async function NewsDetailPage({
 
             </div>
           )}
-
 
           {/* Inhalt */}
 
@@ -325,7 +329,6 @@ export default async function NewsDetailPage({
 
           )}
 
-
           {/* Zurück */}
 
           <div className="mt-12 border-t border-neutral-200 pt-7">
@@ -356,7 +359,6 @@ export default async function NewsDetailPage({
         </div>
 
       </section>
-
 
       {/* =====================================================
           KONTAKT
@@ -457,4 +459,3 @@ export default async function NewsDetailPage({
     </main>
   )
 }
-

@@ -1,79 +1,83 @@
-import { createClient } from '@/lib/supabase/server'
+import { sql } from "@/lib/neon";
 
-export const SITE_MEDIA_BUCKET = 'site-media'
+export const SITE_MEDIA_BUCKET = "site-media";
 
 export const SITE_PAGES = [
-  'home',
-  'team',
-  'referenzen',
-  'news',
-] as const
+  "home",
+  "team",
+  "referenzen",
+  "news",
+] as const;
 
-export type SitePage = (typeof SITE_PAGES)[number]
+export type SitePage = (typeof SITE_PAGES)[number];
 
 export type SiteContent = {
-  id: string
-  page: string
-  section: string
-  content_key: string
-  content: string
-  visible: boolean
-  sort_order: number
-}
+  id: string;
+  page: string;
+  section: string;
+  content_key: string;
+  content: string;
+  visible: boolean;
+  sort_order: number;
+};
 
 export type PageMedia = {
-  id: string
-  page: SitePage
-  media_type: string
-  storage_path: string | null
-  public_url: string | null
-  alt_text: string | null
-  opacity: number
-  visible: boolean
-  created_at: string
-  updated_at: string
-}
+  id: string;
+  page: SitePage;
+  media_type: string;
+  storage_path: string | null;
+  public_url: string | null;
+  alt_text: string | null;
+  opacity: number;
+  visible: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 /* =========================================================
-   WEBSITE-TEXTE
+   WEBSITE-TEXTE AUS NEON LADEN
    ========================================================= */
 
 export async function getSiteContent(
   page?: string
 ): Promise<SiteContent[]> {
-  const supabase = await createClient()
+  try {
+    const data = page
+      ? await sql`
+          SELECT
+            id,
+            page,
+            section,
+            content_key,
+            content,
+            visible,
+            sort_order
+          FROM public.site_content
+          WHERE page = ${page}
+          ORDER BY sort_order ASC
+        `
+      : await sql`
+          SELECT
+            id,
+            page,
+            section,
+            content_key,
+            content,
+            visible,
+            sort_order
+          FROM public.site_content
+          ORDER BY sort_order ASC
+        `;
 
-  let query = supabase
-    .from('site_content')
-    .select(`
-      id,
-      page,
-      section,
-      content_key,
-      content,
-      visible,
-      sort_order
-    `)
-    .order('sort_order', {
-      ascending: true,
-    })
-
-  if (page) {
-    query = query.eq('page', page)
-  }
-
-  const { data, error } = await query
-
-  if (error) {
+    return data as SiteContent[];
+  } catch (error) {
     console.error(
-      'Fehler beim Laden der Website-Inhalte:',
+      "Fehler beim Laden der Website-Inhalte aus Neon:",
       error
-    )
+    );
 
-    return []
+    return [];
   }
-
-  return (data as SiteContent[]) || []
 }
 
 /* =========================================================
@@ -89,103 +93,114 @@ export function getContent(
   contents: SiteContent[],
   section: string,
   key: string,
-  fallback = ''
+  fallback = ""
 ): string {
   const item = contents.find(
     (content) =>
       content.section === section &&
       content.content_key === key
-  )
+  );
 
   // Kein Eintrag vorhanden
   if (!item) {
-    return fallback
+    return fallback;
   }
 
   // Eintrag vorhanden, aber deaktiviert
   if (!item.visible) {
-    return ''
+    return "";
   }
 
-  return item.content.replace(/\\n/g, '\n')
+  // Gespeicherte Zeichenfolgen "\\n" in Zeilenumbrüche umwandeln
+  return item.content.replace(/\\n/g, "\n");
 }
 
 /* =========================================================
-   PAGE MEDIA
+   PAGE MEDIA AUS NEON LADEN
    ========================================================= */
 
 export async function getPageMedia(
   page: SitePage,
-  mediaType = 'hero'
+  mediaType = "hero"
 ): Promise<PageMedia | null> {
-  const supabase = await createClient()
+  try {
+    const data = await sql`
+      SELECT
+        id,
+        page,
+        media_type,
+        storage_path,
+        public_url,
+        alt_text,
+        opacity,
+        visible,
+        created_at,
+        updated_at
+      FROM public.page_media
+      WHERE page = ${page}
+        AND media_type = ${mediaType}
+      LIMIT 1
+    `;
 
-  const { data, error } = await supabase
-    .from('page_media')
-    .select(`
-      id,
-      page,
-      media_type,
-      storage_path,
-      public_url,
-      alt_text,
-      opacity,
-      visible,
-      created_at,
-      updated_at
-    `)
-    .eq('page', page)
-    .eq('media_type', mediaType)
-    .maybeSingle()
+    if (data.length === 0) {
+      return null;
+    }
 
-  if (error) {
+    return data[0] as PageMedia;
+  } catch (error) {
     console.error(
-      `Fehler beim Laden von page_media (${page}):`,
+      `Fehler beim Laden von page_media aus Neon (${page}):`,
       error
-    )
+    );
 
-    return null
+    return null;
   }
-
-  return data as PageMedia | null
 }
 
 /* =========================================================
    STORAGE URL
+
+   Die Dateien liegen vorerst weiterhin in Supabase Storage.
    ========================================================= */
 
 export function getStorageUrl(
   storagePath: string | null | undefined
 ): string | null {
   if (!storagePath) {
-    return null
+    return null;
   }
 
-  const path = storagePath.trim()
+  const path = storagePath.trim();
 
   if (!path) {
-    return null
+    return null;
   }
 
+  // Bereits vollständige URLs direkt verwenden
   if (
-    path.startsWith('http://') ||
-    path.startsWith('https://')
+    path.startsWith("http://") ||
+    path.startsWith("https://")
   ) {
-    return path
+    return path;
   }
 
-  if (path.startsWith('/')) {
-    return path
+  // Lokale oder absolute Pfade direkt verwenden
+  if (path.startsWith("/")) {
+    return path;
   }
 
   const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   if (!supabaseUrl) {
-    return null
+    console.error(
+      "NEXT_PUBLIC_SUPABASE_URL fehlt. Storage-URL kann nicht erstellt werden."
+    );
+
+    return null;
   }
 
-  return `${supabaseUrl}/storage/v1/object/public/${SITE_MEDIA_BUCKET}/${path}`
+  return `${supabaseUrl}/storage/v1/object/public/${SITE_MEDIA_BUCKET}/${path}`;
 }
 
 /* =========================================================
@@ -196,16 +211,14 @@ export function getMediaUrl(
   media: PageMedia | null
 ): string | null {
   if (!media || !media.visible) {
-    return null
+    return null;
   }
 
   if (media.public_url) {
-    return media.public_url
+    return media.public_url;
   }
 
-  return getStorageUrl(
-    media.storage_path
-  )
+  return getStorageUrl(media.storage_path);
 }
 
 /* =========================================================
@@ -215,8 +228,5 @@ export function getMediaUrl(
 export async function getHeroMedia(
   page: SitePage
 ): Promise<PageMedia | null> {
-  return getPageMedia(
-    page,
-    'hero'
-  )
+  return getPageMedia(page, "hero");
 }

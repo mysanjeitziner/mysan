@@ -1,21 +1,16 @@
-
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { headers } from 'next/headers'
+import { auth } from '@/lib/auth'
 import LoginForm from './LoginForm'
 
 export default async function LoginPage() {
-  const supabase = await createClient()
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  // Bereits eingeloggt?
-  // Dann direkt ins Admin-Dashboard.
-  if (user) {
+  if (session) {
     redirect('/admin')
   }
 
   return <LoginForm />
 }
-

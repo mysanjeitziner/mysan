@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 
-const BUCKET = 'page-media'
+import { NextResponse } from 'next/server'
+import { sql } from '@/lib/neon'
+import { getAdminUser } from '@/lib/auth-admin'
+import cloudinary from '@/lib/cloudinary'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 const ALLOWED_PAGES = [
   'home',
@@ -30,534 +34,328 @@ const ALLOWED_MIME_TYPES = [
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
+type MediaRecord = Record<string, any> & {
+  opacity?: number | string | null
+}
+
+type CloudinaryUploadResult = {
+  secure_url: string
+  public_id: string
+  width: number
+  height: number
+  format: string
+}
+
+/* =========================================================
+   ADMIN-AUTHENTIFIZIERUNG
+========================================================= */
+
+async function authorizeAdmin() {
+  const admin = await getAdminUser()
+
+  if (!admin) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          'Du bist nicht angemeldet oder hast keine Admin-Berechtigung.',
+      },
+      { status: 401 }
+    )
+  }
+
+  return null
+}
 
 /* =========================================================
    HILFSFUNKTIONEN
 ========================================================= */
 
-function getExtension(
-  fileName: string,
-  mimeType: string
-): string {
-  const originalExtension =
-    fileName
-      .split('.')
-      .pop()
-      ?.toLowerCase()
+function normalizeMedia<T extends Record<string, any>>(
+  media: T
+): Omit<T, 'opacity'> & {
+  opacity: number | null
+} {
+  const opacityValue = media.opacity
 
-  if (
-    originalExtension &&
-    ['jpg', 'jpeg', 'png', 'webp', 'avif'].includes(
-      originalExtension
-    )
-  ) {
-    return originalExtension
-  }
-
-  switch (mimeType) {
-    case 'image/png':
-      return 'png'
-
-    case 'image/webp':
-      return 'webp'
-
-    case 'image/avif':
-      return 'avif'
-
-    case 'image/jpeg':
-    default:
-      return 'jpg'
+  return {
+    ...media,
+    opacity:
+      opacityValue === null || opacityValue === undefined
+        ? null
+        : Number(opacityValue),
   }
 }
 
+// Unsere neuen Cloudinary-Bilder liegen alle unter mysan/.
+function isCloudinaryPublicId(
+  storagePath: string | null | undefined
+): boolean {
+  return Boolean(storagePath?.startsWith('mysan/'))
+}
+
+// Cloudinary-Bild löschen.
+async function deleteCloudinaryImage(publicId: string) {
+  return cloudinary.uploader.destroy(publicId, {
+    resource_type: 'image',
+    invalidate: true,
+  })
+}
+
+// Bild zu Cloudinary hochladen.
+async function uploadToCloudinary(
+  buffer: Buffer,
+  page: string
+): Promise<CloudinaryUploadResult> {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: `mysan/${page}`,
+        resource_type: 'image',
+        overwrite: false,
+      },
+      (error, result) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        if (!result) {
+          reject(
+            new Error('Cloudinary hat kein Ergebnis zurückgegeben.')
+          )
+          return
+        }
+
+        resolve({
+          secure_url: result.secure_url,
+          public_id: result.public_id,
+          width: result.width,
+          height: result.height,
+          format: result.format,
+        })
+      }
+    )
+
+    uploadStream.end(buffer)
+  })
+}
 
 /* =========================================================
    POST
-   NEUES BILD HOCHLADEN / BILD ERSETZEN
+   BILD HOCHLADEN ODER ERSETZEN
 ========================================================= */
 
-export async function POST(
-  request: Request
-) {
-  let uploadedStoragePath: string | null = null
+export async function POST(request: Request) {
+  let uploadedPublicId: string | null = null
 
   try {
-    const supabase =
-      await createClient()
+    const authResponse = await authorizeAdmin()
 
-    /* =====================================================
-       FORM DATA
-    ===================================================== */
+    if (authResponse) {
+      return authResponse
+    }
 
-    const formData =
-      await request.formData()
+    const formData = await request.formData()
 
-    const file =
-      formData.get('file')
+    const file = formData.get('file')
+    const page = String(formData.get('page') || '').trim()
+    const mediaType = String(
+      formData.get('mediaType') || ''
+    ).trim()
 
-    const page =
-      String(
-        formData.get('page') || ''
-      ).trim()
+    const altText = String(
+      formData.get('altText') || ''
+    ).trim()
 
-    const mediaType =
-      String(
-        formData.get('mediaType') || ''
-      ).trim()
+    const opacityValue = Number(
+      formData.get('opacity') ?? 0.18
+    )
 
-    const altText =
-      String(
-        formData.get('altText') || ''
-      ).trim()
+    const visibleValue = String(
+      formData.get('visible') ?? 'true'
+    )
 
-    const opacityValue =
-      Number(
-        formData.get('opacity') ?? 0.18
-      )
-
-    const visibleValue =
-      String(
-        formData.get('visible') ?? 'true'
-      )
-
-    /* =====================================================
-       DATEI PRÜFEN
-    ===================================================== */
-
-    if (
-      !(file instanceof File)
-    ) {
+    if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            'Keine Bilddatei erhalten.',
+          error: 'Keine Bilddatei erhalten.',
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       )
     }
 
-    /* =====================================================
-       SEITE PRÜFEN
-    ===================================================== */
-
-    if (
-      !ALLOWED_PAGES.includes(page)
-    ) {
+    if (!ALLOWED_PAGES.includes(page)) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            `Ungültige Seite: ${page}`,
+          error: `Ungültige Seite: ${page}`,
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       )
     }
 
-    /* =====================================================
-       MEDIA TYPE PRÜFEN
-    ===================================================== */
-
-    if (
-      !ALLOWED_TYPES.includes(
-        mediaType
-      )
-    ) {
+    if (!ALLOWED_TYPES.includes(mediaType)) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            `Ungültiger Bildtyp: ${mediaType}`,
+          error: `Ungültiger Bildtyp: ${mediaType}`,
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       )
     }
 
-    /* =====================================================
-       MIME TYPE PRÜFEN
-    ===================================================== */
-
-    if (
-      !ALLOWED_MIME_TYPES.includes(
-        file.type
-      )
-    ) {
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            'Nur JPG, PNG, WebP und AVIF sind erlaubt.',
+          error: 'Nur JPG, PNG, WebP und AVIF sind erlaubt.',
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       )
     }
 
-    /* =====================================================
-       DATEIGRÖSSE
-    ===================================================== */
-
-    if (
-      file.size >
-      MAX_FILE_SIZE
-    ) {
+    if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            'Das Bild darf maximal 10 MB gross sein.',
+          error: 'Das Bild darf maximal 10 MB gross sein.',
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       )
     }
 
-    /* =====================================================
-       TRANSPARENZ
-    ===================================================== */
+    const opacity = Number.isFinite(opacityValue)
+      ? Math.max(0, Math.min(1, opacityValue))
+      : 0.18
 
-    const opacity =
-      Number.isFinite(
-        opacityValue
-      )
-        ? Math.max(
-            0,
-            Math.min(
-              1,
-              opacityValue
-            )
-          )
-        : 0.18
+    const visible = visibleValue !== 'false'
 
-    /* =====================================================
-       SICHTBARKEIT
-    ===================================================== */
+    // Vorhandenen Datensatz aus Neon laden.
+    const existingRows = await sql`
+      SELECT
+        id,
+        page,
+        media_type,
+        storage_path,
+        public_url,
+        alt_text,
+        opacity,
+        visible
+      FROM public.page_media
+      WHERE page = ${page}
+        AND media_type = ${mediaType}
+      LIMIT 1
+    `
 
-    const visible =
-      visibleValue !== 'false'
+    const existing = existingRows[0] ?? null
 
-    /* =====================================================
-       VORHANDENES BILD LADEN
+    // Datei vorbereiten.
+    const buffer = Buffer.from(
+      await file.arrayBuffer()
+    )
 
-       WICHTIG:
-       page + media_type
+    // Neues Bild zu Cloudinary hochladen.
+    const cloudinaryResult = await uploadToCloudinary(
+      buffer,
+      page
+    )
 
-       NICHT nur page!
-    ===================================================== */
+    uploadedPublicId = cloudinaryResult.public_id
 
-    const {
-      data: existing,
-      error: existingError,
-    } =
-      await supabase
-        .from('page_media')
-        .select(`
-          id,
-          page,
-          media_type,
-          storage_path,
-          public_url,
-          alt_text,
-          opacity,
-          visible
-        `)
-        .eq(
-          'page',
-          page
-        )
-        .eq(
-          'media_type',
-          mediaType
-        )
-        .maybeSingle()
+    const publicUrl = cloudinaryResult.secure_url
+    const storagePath = cloudinaryResult.public_id
 
-    if (existingError) {
-      console.error(
-        'EXISTING MEDIA ERROR:',
-        existingError
-      )
-
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            existingError.message,
-        },
-        {
-          status: 500,
-        }
+    if (!publicUrl || !storagePath) {
+      throw new Error(
+        'Cloudinary hat keine gültige Bildadresse geliefert.'
       )
     }
 
-    /* =====================================================
-       NEUEN DATEINAMEN ERSTELLEN
-    ===================================================== */
-
-    const extension =
-      getExtension(
-        file.name,
-        file.type
+    // Bildinformationen in Neon speichern.
+    const mediaRows = await sql`
+      INSERT INTO public.page_media (
+        page,
+        media_type,
+        storage_path,
+        public_url,
+        alt_text,
+        opacity,
+        visible,
+        updated_at
       )
-
-    const fileName =
-      `${page}-${mediaType}-${crypto.randomUUID()}.${extension}`
-
-    const storagePath =
-      `${page}/${fileName}`
-
-    /* =====================================================
-       DATEI IN BUFFER
-    ===================================================== */
-
-    const buffer =
-      Buffer.from(
-        await file.arrayBuffer()
+      VALUES (
+        ${page},
+        ${mediaType},
+        ${storagePath},
+        ${publicUrl},
+        ${altText || null},
+        ${opacity},
+        ${visible},
+        NOW()
       )
+      ON CONFLICT (page, media_type)
+      DO UPDATE SET
+        storage_path = EXCLUDED.storage_path,
+        public_url = EXCLUDED.public_url,
+        alt_text = EXCLUDED.alt_text,
+        opacity = EXCLUDED.opacity,
+        visible = EXCLUDED.visible,
+        updated_at = NOW()
+      RETURNING *
+    `
 
-    /* =====================================================
-       STORAGE UPLOAD
-    ===================================================== */
+    const media = mediaRows[0] as
+      | MediaRecord
+      | undefined
 
-    const {
-      error: uploadError,
-    } =
-      await supabase.storage
-        .from(BUCKET)
-        .upload(
-          storagePath,
-          buffer,
-          {
-            contentType:
-              file.type,
-            upsert: false,
-            cacheControl:
-              '3600',
-          }
-        )
-
-    if (uploadError) {
-      console.error(
-        'STORAGE UPLOAD ERROR:',
-        uploadError
-      )
-
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            `Upload fehlgeschlagen: ${uploadError.message}`,
-        },
-        {
-          status: 500,
-        }
+    if (!media) {
+      throw new Error(
+        'Der Medien-Datensatz konnte nicht gespeichert werden.'
       )
     }
 
-    uploadedStoragePath =
-      storagePath
+    // Neues Bild ist erfolgreich gespeichert.
+    uploadedPublicId = null
 
-    /* =====================================================
-       PUBLIC URL
-    ===================================================== */
-
-    const {
-      data: publicUrlData,
-    } =
-      supabase.storage
-        .from(BUCKET)
-        .getPublicUrl(
-          storagePath
-        )
-
-    const publicUrl =
-      publicUrlData.publicUrl
-
-    if (!publicUrl) {
-      await supabase.storage
-        .from(BUCKET)
-        .remove([
-          storagePath,
-        ])
-
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            'Die öffentliche URL für das Bild konnte nicht erstellt werden.',
-        },
-        {
-          status: 500,
-        }
-      )
-    }
-
-    /* =====================================================
-       DATEN FÜR DATABASE
-    ===================================================== */
-
-    const mediaData = {
-      page,
-      media_type:
-        mediaType,
-      storage_path:
-        storagePath,
-      public_url:
-        publicUrl,
-      alt_text:
-        altText || null,
-      opacity,
-      visible,
-      updated_at:
-        new Date().toISOString(),
-    }
-
-    /* =====================================================
-       DATABASE UPSERT
-
-       DEINE TABELLE HAT:
-       UNIQUE (page, media_type)
-
-       Deshalb:
-       onConflict = page,media_type
-    ===================================================== */
-
-    const {
-      data: media,
-      error: databaseError,
-    } =
-      await supabase
-        .from('page_media')
-        .upsert(
-          mediaData,
-          {
-            onConflict:
-              'page,media_type',
-          }
-        )
-        .select()
-        .single()
-
-    /* =====================================================
-       DATABASE FEHLER
-    ===================================================== */
-
-    if (databaseError) {
-      console.error(
-        'DATABASE UPSERT ERROR:',
-        databaseError
-      )
-
-      /* Neu hochgeladenes Bild wieder löschen */
-
-      await supabase.storage
-        .from(BUCKET)
-        .remove([
-          storagePath,
-        ])
-
-      uploadedStoragePath =
-        null
-
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            `Bild wurde hochgeladen, konnte aber nicht in der Datenbank gespeichert werden: ${databaseError.message}`,
-        },
-        {
-          status: 500,
-        }
-      )
-    }
-
-    /* =====================================================
-       ALTES BILD LÖSCHEN
-
-       Erst nachdem das neue Bild erfolgreich
-       in der DB gespeichert wurde.
-    ===================================================== */
-
+    // Altes Cloudinary-Bild erst nach erfolgreichem
+    // Datenbank-Update löschen.
+    // Alte Supabase-Bilder bleiben vorerst unangetastet.
     if (
       existing?.storage_path &&
-      existing.storage_path !==
-        storagePath
+      existing.storage_path !== storagePath &&
+      isCloudinaryPublicId(String(existing.storage_path))
     ) {
-      const {
-        error:
-          oldStorageError,
-      } =
-        await supabase.storage
-          .from(BUCKET)
-          .remove([
-            existing.storage_path,
-          ])
-
-      if (oldStorageError) {
-        console.warn(
-          'ALTES STORAGE-BILD KONNTE NICHT GELÖSCHT WERDEN:',
-          oldStorageError
+      try {
+        await deleteCloudinaryImage(
+          String(existing.storage_path)
         )
-
-        /*
-         * Kein Upload-Fehler mehr.
-         *
-         * Das neue Bild ist bereits korrekt
-         * gespeichert.
-         */
+      } catch (deleteError) {
+        console.warn(
+          'ALTES CLOUDINARY-BILD KONNTE NICHT GELÖSCHT WERDEN:',
+          deleteError
+        )
       }
     }
-
-    /* =====================================================
-       ERFOLG
-    ===================================================== */
 
     return NextResponse.json(
       {
         success: true,
-        media,
+        media: normalizeMedia(media),
       },
-      {
-        status: 200,
-      }
+      { status: 200 }
     )
-
   } catch (error) {
+    console.error('PAGE MEDIA POST ERROR:', error)
 
-    console.error(
-      'PAGE MEDIA POST ERROR:',
-      error
-    )
-
-    /* =====================================================
-       FALLS STORAGE UPLOAD ERFOLGREICH WAR,
-       ABER SPÄTER EIN FEHLER AUFTRITT
-    ===================================================== */
-
-    if (
-      uploadedStoragePath
-    ) {
+    // Neues Bild bei einem Fehler wieder entfernen.
+    if (uploadedPublicId) {
       try {
-        const supabase =
-          await createClient()
-
-        await supabase.storage
-          .from(BUCKET)
-          .remove([
-            uploadedStoragePath,
-          ])
-      } catch (
-        cleanupError
-      ) {
+        await deleteCloudinaryImage(uploadedPublicId)
+      } catch (cleanupError) {
         console.error(
-          'CLEANUP ERROR:',
+          'CLOUDINARY CLEANUP ERROR:',
           cleanupError
         )
       }
@@ -571,135 +369,88 @@ export async function POST(
             ? error.message
             : 'Unbekannter Fehler beim Hochladen.',
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     )
   }
 }
 
-
 /* =========================================================
    PATCH
-   ALT-TEXT / TRANSPARENZ / SICHTBARKEIT
+   ALT-TEXT, TRANSPARENZ UND SICHTBARKEIT ÄNDERN
 ========================================================= */
 
-export async function PATCH(
-  request: Request
-) {
+export async function PATCH(request: Request) {
   try {
-    const supabase =
-      await createClient()
+    const authResponse = await authorizeAdmin()
 
-    const body =
-      await request.json()
+    if (authResponse) {
+      return authResponse
+    }
 
-    const id =
-      String(
-        body?.id || ''
-      ).trim()
+    const body = await request.json()
+
+    const id = String(body?.id || '').trim()
 
     if (!id) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            'Keine Medien-ID angegeben.',
+          error: 'Keine Medien-ID angegeben.',
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       )
     }
 
-    const opacityValue =
-      Number(
-        body?.opacity ?? 0.18
-      )
+    const opacityValue = Number(
+      body?.opacity ?? 0.18
+    )
 
-    const opacity =
-      Number.isFinite(
-        opacityValue
-      )
-        ? Math.max(
-            0,
-            Math.min(
-              1,
-              opacityValue
-            )
-          )
-        : 0.18
+    const opacity = Number.isFinite(opacityValue)
+      ? Math.max(0, Math.min(1, opacityValue))
+      : 0.18
 
-    const visible =
-      body?.visible !== false
+    const visible = body?.visible !== false
 
     const altText =
       body?.alt_text === null ||
       body?.alt_text === undefined
         ? null
-        : String(
-            body.alt_text
-          ).trim() || null
+        : String(body.alt_text).trim() || null
 
-    /* =====================================================
-       UPDATE
-    ===================================================== */
+    const rows = await sql`
+      UPDATE public.page_media
+      SET
+        alt_text = ${altText},
+        opacity = ${opacity},
+        visible = ${visible},
+        updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `
 
-    const {
-      data: media,
-      error,
-    } =
-      await supabase
-        .from('page_media')
-        .update({
-          alt_text:
-            altText,
-          opacity,
-          visible,
-          updated_at:
-            new Date().toISOString(),
-        })
-        .eq(
-          'id',
-          id
-        )
-        .select()
-        .single()
+    const media = rows[0] as
+      | MediaRecord
+      | undefined
 
-    if (error) {
-      console.error(
-        'PAGE MEDIA PATCH DATABASE ERROR:',
-        error
-      )
-
+    if (!media) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            error.message,
+          error: 'Der Medieneintrag wurde nicht gefunden.',
         },
-        {
-          status: 500,
-        }
+        { status: 404 }
       )
     }
 
     return NextResponse.json(
       {
         success: true,
-        media,
+        media: normalizeMedia(media),
       },
-      {
-        status: 200,
-      }
+      { status: 200 }
     )
-
   } catch (error) {
-
-    console.error(
-      'PAGE MEDIA PATCH ERROR:',
-      error
-    )
+    console.error('PAGE MEDIA PATCH ERROR:', error)
 
     return NextResponse.json(
       {
@@ -709,210 +460,114 @@ export async function PATCH(
             ? error.message
             : 'Speichern fehlgeschlagen.',
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     )
   }
 }
 
-
 /* =========================================================
    DELETE
+   BILD UND DATENSATZ LÖSCHEN
 ========================================================= */
 
-export async function DELETE(
-  request: Request
-) {
+export async function DELETE(request: Request) {
   try {
-    const supabase =
-      await createClient()
+    const authResponse = await authorizeAdmin()
 
-    /* =====================================================
-       ID AUS URL ODER BODY LESEN
+    if (authResponse) {
+      return authResponse
+    }
 
-       Dein PageMediaEditor verwendet aktuell:
+    const url = new URL(request.url)
 
-       /api/admin/page-media?id=...
-
-       Deshalb lesen wir zuerst die URL.
-       Zusätzlich unterstützen wir JSON.
-    ===================================================== */
-
-    const url =
-      new URL(
-        request.url
-      )
-
-    let id =
-      url.searchParams.get(
-        'id'
-      )
-
-    /* =====================================================
-       FALLBACK BODY
-    ===================================================== */
+    let id = url.searchParams.get('id')
 
     if (!id) {
       try {
-        const body =
-          await request.json()
-
-        id =
-          body?.id
-            ? String(
-                body.id
-              )
-            : null
+        const body = await request.json()
+        id = body?.id ? String(body.id) : null
       } catch {
-        /* Kein JSON-Body vorhanden */
+        // Kein JSON-Body vorhanden.
       }
     }
 
-    id =
-      id?.trim() || ''
+    id = id?.trim() || ''
 
     if (!id) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            'Keine Medien-ID angegeben.',
+          error: 'Keine Medien-ID angegeben.',
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       )
     }
 
-    /* =====================================================
-       MEDIA LADEN
-    ===================================================== */
+    // Datensatz aus Neon laden.
+    const rows = await sql`
+      SELECT
+        id,
+        page,
+        media_type,
+        storage_path
+      FROM public.page_media
+      WHERE id = ${id}
+      LIMIT 1
+    `
 
-    const {
-      data: media,
-      error: findError,
-    } =
-      await supabase
-        .from('page_media')
-        .select(`
-          id,
-          page,
-          media_type,
-          storage_path
-        `)
-        .eq(
-          'id',
-          id
-        )
-        .single()
+    const media = rows[0]
 
-    if (findError) {
-      console.error(
-        'PAGE MEDIA FIND ERROR:',
-        findError
-      )
-
+    if (!media) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            findError.message,
+          error: 'Der Medieneintrag wurde nicht gefunden.',
         },
-        {
-          status: 404,
-        }
+        { status: 404 }
       )
     }
 
-    /* =====================================================
-       STORAGE LÖSCHEN
-    ===================================================== */
+    // Datensatz aus Neon löschen.
+    const deletedRows = await sql`
+      DELETE FROM public.page_media
+      WHERE id = ${id}
+      RETURNING id
+    `
 
+    if (deletedRows.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Der Medieneintrag konnte nicht gelöscht werden.',
+        },
+        { status: 404 }
+      )
+    }
+
+    // Nur Cloudinary-Bilder löschen.
+    // Alte Supabase-Bilder bleiben vorerst unangetastet.
     if (
-      media.storage_path
+      media.storage_path &&
+      isCloudinaryPublicId(String(media.storage_path))
     ) {
-      const {
-        error:
-          storageError,
-      } =
-        await supabase.storage
-          .from(BUCKET)
-          .remove([
-            media.storage_path,
-          ])
-
-      if (storageError) {
-        console.error(
-          'PAGE MEDIA STORAGE DELETE ERROR:',
-          storageError
+      try {
+        await deleteCloudinaryImage(
+          String(media.storage_path)
         )
-
-        return NextResponse.json(
-          {
-            success: false,
-            error:
-              `Das Bild konnte nicht aus dem Storage gelöscht werden: ${storageError.message}`,
-          },
-          {
-            status: 500,
-          }
+      } catch (deleteError) {
+        console.error(
+          'CLOUDINARY IMAGE DELETE ERROR:',
+          deleteError
         )
       }
     }
-
-    /* =====================================================
-       DATABASE LÖSCHEN
-    ===================================================== */
-
-    const {
-      error: deleteError,
-    } =
-      await supabase
-        .from('page_media')
-        .delete()
-        .eq(
-          'id',
-          id
-        )
-
-    if (deleteError) {
-      console.error(
-        'PAGE MEDIA DATABASE DELETE ERROR:',
-        deleteError
-      )
-
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            deleteError.message,
-        },
-        {
-          status: 500,
-        }
-      )
-    }
-
-    /* =====================================================
-       ERFOLG
-    ===================================================== */
 
     return NextResponse.json(
-      {
-        success: true,
-      },
-      {
-        status: 200,
-      }
+      { success: true },
+      { status: 200 }
     )
-
   } catch (error) {
-
-    console.error(
-      'PAGE MEDIA DELETE ERROR:',
-      error
-    )
+    console.error('PAGE MEDIA DELETE ERROR:', error)
 
     return NextResponse.json(
       {
@@ -922,9 +577,7 @@ export async function DELETE(
             ? error.message
             : 'Löschen fehlgeschlagen.',
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     )
   }
 }

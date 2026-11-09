@@ -6,7 +6,7 @@ import {
   getStorageUrl,
 } from '@/lib/site-content'
 
-import { createClient } from '@/lib/supabase/server'
+import { sql } from '@/lib/neon'
 
 import ContactForm from '@/components/contact-form'
 import ConsentGatedMap from '@/components/consent-gated-map'
@@ -37,55 +37,50 @@ type PageMedia = {
 
 export default async function KontaktPage() {
 
-  const supabase = await createClient()
-
   /* =========================================================
-     WEBSITE CONTENT
+     WEBSITE CONTENT AUS NEON
   ========================================================= */
 
-  const contents =
-    await getSiteContent('kontakt')
-
+  const contents = await getSiteContent('kontakt')
 
   /* =========================================================
-     KONTAKT-BILD AUS PAGE_MEDIA
-     
-     media_type = "contact"
-     
-     Das Bild wird im Admin unter:
-     Website-Inhalte → Kontakt → Bilder
-     hochgeladen.
+     KONTAKT-BILD AUS NEON: PAGE_MEDIA
   ========================================================= */
 
-  const {
-    data: contactMediaData,
-    error: contactMediaError,
-  } = await supabase
-    .from('page_media')
-    .select(`
-      id,
-      page,
-      media_type,
-      storage_path,
-      public_url,
-      alt_text,
-      opacity,
-      visible
-    `)
-    .eq('page', 'kontakt')
-    .eq('media_type', 'contact')
-    .eq('visible', true)
-    .maybeSingle()
+  let contactMedia: PageMedia | null = null
 
-  const contactMedia =
-    contactMediaData as PageMedia | null
+  try {
+    const contactMediaData = await sql`
+      SELECT
+        id,
+        page,
+        media_type,
+        storage_path,
+        public_url,
+        alt_text,
+        opacity,
+        visible
+      FROM public.page_media
+      WHERE page = ${'kontakt'}
+        AND media_type = ${'contact'}
+        AND visible = TRUE
+      LIMIT 1
+    `
 
+    contactMedia =
+      (contactMediaData[0] as PageMedia | undefined) ?? null
+
+  } catch (error) {
+    console.error(
+      'Fehler beim Laden des Kontaktbildes aus Neon:',
+      error
+    )
+  }
 
   /* =========================================================
      KONTAKT-BILD URL
      
      Priorität:
-     
      1. public_url
      2. storage_path über getStorageUrl()
      3. /kontakt.jpg als Fallback
@@ -94,32 +89,21 @@ export default async function KontaktPage() {
   let contactImage = '/kontakt.jpg'
 
   if (contactMedia) {
-
     if (contactMedia.public_url) {
-
-      contactImage =
-        contactMedia.public_url
-
+      contactImage = contactMedia.public_url
     } else if (contactMedia.storage_path) {
-
       contactImage =
-        getStorageUrl(
-          contactMedia.storage_path
-        ) || '/kontakt.jpg'
-
+        getStorageUrl(contactMedia.storage_path) ||
+        '/kontakt.jpg'
     }
-
   }
-
 
   /* =========================================================
      ALT-TEXT
   ========================================================= */
 
   const contactImageAlt =
-    contactMedia?.alt_text ||
-    'mySan Jeitziner GmbH'
-
+    contactMedia?.alt_text || 'mySan Jeitziner GmbH'
 
   /* =========================================================
      HERO
@@ -153,7 +137,6 @@ export default async function KontaktPage() {
     'Gerne stehen wir Ihnen mit Rat & Tat zur Verfügung.'
   )
 
-
   /* =========================================================
      FORMULAR
   ========================================================= */
@@ -172,9 +155,8 @@ export default async function KontaktPage() {
     'Wir sind für Sie da.'
   )
 
-
   /* =========================================================
-     KONTAKT INFORMATIONEN
+     KONTAKTINFORMATIONEN
   ========================================================= */
 
   const contactEyebrow = getContent(
@@ -247,7 +229,6 @@ export default async function KontaktPage() {
     'info@mysan.ch'
   )
 
-
   /* =========================================================
      MAP
   ========================================================= */
@@ -265,7 +246,6 @@ export default async function KontaktPage() {
     'route',
     'Route zu uns'
   )
-
 
   /* =========================================================
      CTA
@@ -292,14 +272,12 @@ export default async function KontaktPage() {
     'Unsere Referenzen'
   )
 
-
   /* =========================================================
      PAGE
   ========================================================= */
 
   return (
     <main className="bg-white text-neutral-900">
-
 
       {/* =====================================================
           HERO
@@ -310,44 +288,17 @@ export default async function KontaktPage() {
         {/* Blauer linker Rand */}
 
         <div
-          className="
-            absolute
-            left-0
-            top-0
-            z-30
-            h-full
-            w-2
-          "
+          className="absolute left-0 top-0 z-30 h-full w-2"
           style={{
-            backgroundColor:
-              MYSAN_BLUE,
+            backgroundColor: MYSAN_BLUE,
           }}
         />
 
+        {/* Hintergrundbild */}
 
-        {/* ===================================================
-            HINTERGRUNDBILD
-        =================================================== */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
 
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-x-0
-            top-0
-            z-10
-          "
-        >
-
-          <div
-            className="
-              mx-auto
-              max-w-7xl
-              px-8
-              md:px-12
-              lg:px-16
-            "
-          >
+          <div className="mx-auto max-w-7xl px-8 md:px-12 lg:px-16">
 
             <div
               className="
@@ -362,21 +313,11 @@ export default async function KontaktPage() {
                 src={contactImage}
                 alt={contactImageAlt}
                 aria-hidden="true"
-                className="
-                  h-auto
-                  w-full
-                  object-cover
-                  object-center
-                  opacity-[0.18]
-                "
+                className="h-auto w-full object-cover object-center opacity-[0.18]"
                 style={{
-                  opacity:
-                    contactMedia?.opacity != null
-                      ? contactMedia.opacity
-                      : 0.18,
+                  opacity: contactMedia?.opacity ?? 0.18,
                 }}
               />
-
 
               {/* Oberer Übergang */}
 
@@ -391,7 +332,6 @@ export default async function KontaktPage() {
                   to-transparent
                 "
               />
-
 
               {/* Unterer Übergang */}
 
@@ -414,10 +354,7 @@ export default async function KontaktPage() {
 
         </div>
 
-
-        {/* ===================================================
-            HERO INHALT
-        =================================================== */}
+        {/* Hero-Inhalt */}
 
         <div
           className="
@@ -437,22 +374,12 @@ export default async function KontaktPage() {
 
           <div className="max-w-3xl">
 
-
-            {/* Eyebrow */}
-
             {heroEyebrow && (
-
               <>
-
                 <div
-                  className="
-                    mb-5
-                    h-1
-                    w-14
-                  "
+                  className="mb-5 h-1 w-14"
                   style={{
-                    backgroundColor:
-                      MYSAN_BLUE,
+                    backgroundColor: MYSAN_BLUE,
                   }}
                 />
 
@@ -464,22 +391,15 @@ export default async function KontaktPage() {
                     tracking-[0.25em]
                   "
                   style={{
-                    color:
-                      MYSAN_BLUE,
+                    color: MYSAN_BLUE,
                   }}
                 >
                   {heroEyebrow}
                 </p>
-
               </>
-
             )}
 
-
-            {/* Titel */}
-
             {heroTitle && (
-
               <h1
                 className="
                   mt-4
@@ -491,37 +411,25 @@ export default async function KontaktPage() {
                   lg:text-7xl
                 "
               >
-
                 {heroTitle}
 
                 {heroTitleHighlight && (
-
                   <>
-
                     <br />
 
                     <span
                       style={{
-                        color:
-                          MYSAN_BLUE,
+                        color: MYSAN_BLUE,
                       }}
                     >
                       {heroTitleHighlight}
                     </span>
-
                   </>
-
                 )}
-
               </h1>
-
             )}
 
-
-            {/* Beschreibung */}
-
             {heroDescription && (
-
               <p
                 className="
                   mt-6
@@ -535,7 +443,6 @@ export default async function KontaktPage() {
               >
                 {heroDescription}
               </p>
-
             )}
 
           </div>
@@ -544,65 +451,28 @@ export default async function KontaktPage() {
 
       </section>
 
-
       {/* =====================================================
           KONTAKT
       ===================================================== */}
 
-      <section
-        className="
-          relative
-          overflow-hidden
-          bg-white
-        "
-      >
-
-        {/* Blauer linker Rand */}
+      <section className="relative overflow-hidden bg-white">
 
         <div
-          className="
-            absolute
-            left-0
-            top-0
-            h-full
-            w-2
-          "
+          className="absolute left-0 top-0 h-full w-2"
           style={{
-            backgroundColor:
-              MYSAN_BLUE,
+            backgroundColor: MYSAN_BLUE,
           }}
         />
 
+        <div className="mx-auto max-w-7xl px-8 py-10 md:px-12 md:py-14 lg:px-16">
 
-        <div
-          className="
-            mx-auto
-            max-w-7xl
-            px-8
-            py-10
-            md:px-12
-            md:py-14
-            lg:px-16
-          "
-        >
+          <div className="grid gap-12 lg:grid-cols-[1.15fr_0.85fr]">
 
-          <div
-            className="
-              grid
-              gap-12
-              lg:grid-cols-[1.15fr_0.85fr]
-            "
-          >
-
-
-            {/* =================================================
-                FORMULAR
-            ================================================= */}
+            {/* FORMULAR */}
 
             <div>
 
               {formEyebrow && (
-
                 <p
                   className="
                     text-xs
@@ -611,18 +481,14 @@ export default async function KontaktPage() {
                     tracking-[0.2em]
                   "
                   style={{
-                    color:
-                      MYSAN_BLUE,
+                    color: MYSAN_BLUE,
                   }}
                 >
                   {formEyebrow}
                 </p>
-
               )}
 
-
               {formTitle && (
-
                 <h2
                   className="
                     mt-3
@@ -634,27 +500,19 @@ export default async function KontaktPage() {
                 >
                   {formTitle}
                 </h2>
-
               )}
 
-
               <div className="mt-8">
-
                 <ContactForm />
-
               </div>
 
             </div>
 
-
-            {/* =================================================
-                KONTAKTINFO
-            ================================================= */}
+            {/* KONTAKTINFO */}
 
             <div className="lg:pt-14">
 
               {contactEyebrow && (
-
                 <p
                   className="
                     text-xs
@@ -663,18 +521,14 @@ export default async function KontaktPage() {
                     tracking-[0.2em]
                   "
                   style={{
-                    color:
-                      MYSAN_BLUE,
+                    color: MYSAN_BLUE,
                   }}
                 >
                   {contactEyebrow}
                 </p>
-
               )}
 
-
               {contactCompany && (
-
                 <h2
                   className="
                     mt-3
@@ -686,9 +540,7 @@ export default async function KontaktPage() {
                 >
                   {contactCompany}
                 </h2>
-
               )}
-
 
               <div
                 className="
@@ -700,137 +552,74 @@ export default async function KontaktPage() {
                 "
               >
 
-
                 {/* ADRESSE */}
 
                 {addressLabel && address && (
-
                   <div>
-
-                    <p
-                      className="
-                        font-medium
-                        text-neutral-900
-                      "
-                    >
+                    <p className="font-medium text-neutral-900">
                       {addressLabel}
                     </p>
 
-                    <p
-                      className="
-                        mt-1
-                        whitespace-pre-line
-                      "
-                    >
+                    <p className="mt-1 whitespace-pre-line">
                       {address}
                     </p>
-
                   </div>
-
                 )}
-
 
                 {/* TELEFON */}
 
                 {phoneLabel && phone && (
-
                   <div>
-
-                    <p
-                      className="
-                        font-medium
-                        text-neutral-900
-                      "
-                    >
+                    <p className="font-medium text-neutral-900">
                       {phoneLabel}
                     </p>
 
                     <a
                       href="tel:+41795900960"
-                      className="
-                        mt-1
-                        block
-                        transition
-                        hover:text-[#1dabff]
-                      "
+                      className="mt-1 block transition hover:text-[#1dabff]"
                     >
                       {phone}
                     </a>
-
                   </div>
-
                 )}
-
 
                 {/* BÜRO */}
 
                 {officeLabel && office && (
-
                   <div>
-
-                    <p
-                      className="
-                        font-medium
-                        text-neutral-900
-                      "
-                    >
+                    <p className="font-medium text-neutral-900">
                       {officeLabel}
                     </p>
 
                     <a
                       href="tel:+41792172571"
-                      className="
-                        mt-1
-                        block
-                        transition
-                        hover:text-[#1dabff]
-                      "
+                      className="mt-1 block transition hover:text-[#1dabff]"
                     >
                       {office}
                     </a>
-
                   </div>
-
                 )}
-
 
                 {/* E-MAIL */}
 
                 {emailLabel && email && (
-
                   <div>
-
-                    <p
-                      className="
-                        font-medium
-                        text-neutral-900
-                      "
-                    >
+                    <p className="font-medium text-neutral-900">
                       {emailLabel}
                     </p>
 
                     <a
                       href={`mailto:${email}`}
-                      className="
-                        mt-1
-                        block
-                        transition
-                        hover:text-[#1dabff]
-                      "
+                      className="mt-1 block transition hover:text-[#1dabff]"
                     >
                       {email}
                     </a>
-
                   </div>
-
                 )}
 
               </div>
 
-
-              {/* =================================================
-                  MAP
-              ================================================= */}
+              {/* MAP */}
 
               <div
                 className="
@@ -843,54 +632,30 @@ export default async function KontaktPage() {
                   shadow-sm
                 "
               >
-
                 <ConsentGatedMap
                   src={GOOGLE_MAPS_URL}
-                  title={
-                    mapTitle ||
-                    'mySan Jeitziner GmbH Standort'
-                  }
+                  title={mapTitle || 'mySan Jeitziner GmbH Standort'}
                 />
-
               </div>
 
-
-              {/* =================================================
-                  ROUTE
-              ================================================= */}
+              {/* ROUTE */}
 
               {routeText && (
-
                 <a
                   href="https://www.google.com/maps/search/?api=1&query=Krydenweg+86%2C+3900+Gamsen%2C+Schweiz"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="
-                    mt-4
-                    inline-flex
-                    items-center
-                    text-sm
-                    font-semibold
-                  "
+                  className="mt-4 inline-flex items-center text-sm font-semibold"
                   style={{
-                    color:
-                      MYSAN_BLUE,
+                    color: MYSAN_BLUE,
                   }}
                 >
-
                   {routeText}
 
-                  <span
-                    className="
-                      ml-2
-                      text-lg
-                    "
-                  >
+                  <span className="ml-2 text-lg">
                     →
                   </span>
-
                 </a>
-
               )}
 
             </div>
@@ -901,51 +666,24 @@ export default async function KontaktPage() {
 
       </section>
 
-
       {/* =====================================================
           CTA
       ===================================================== */}
 
       <section
-        className="
-          relative
-          overflow-hidden
-        "
+        className="relative overflow-hidden"
         style={{
-          backgroundColor:
-            MYSAN_BLUE,
+          backgroundColor: MYSAN_BLUE,
         }}
       >
 
-        <div
-          className="
-            mx-auto
-            max-w-7xl
-            px-8
-            py-10
-            md:px-12
-            md:py-12
-            lg:px-16
-          "
-        >
+        <div className="mx-auto max-w-7xl px-8 py-10 md:px-12 md:py-12 lg:px-16">
 
-          <div
-            className="
-              flex
-              flex-col
-              gap-5
-              md:flex-row
-              md:items-center
-              md:justify-between
-            "
-          >
-
-            {/* LINKER BEREICH */}
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
 
             <div>
 
               {ctaEyebrow && (
-
                 <p
                   className="
                     text-xs
@@ -957,12 +695,9 @@ export default async function KontaktPage() {
                 >
                   {ctaEyebrow}
                 </p>
-
               )}
 
-
               {ctaTitle && (
-
                 <h2
                   className="
                     mt-2
@@ -974,16 +709,11 @@ export default async function KontaktPage() {
                 >
                   {ctaTitle}
                 </h2>
-
               )}
 
             </div>
 
-
-            {/* BUTTON */}
-
             {ctaButton && (
-
               <Link
                 href="/referenzen"
                 className="
@@ -1001,20 +731,12 @@ export default async function KontaktPage() {
                   hover:bg-neutral-100
                 "
               >
-
                 {ctaButton}
 
-                <span
-                  className="
-                    ml-3
-                    text-lg
-                  "
-                >
+                <span className="ml-3 text-lg">
                   →
                 </span>
-
               </Link>
-
             )}
 
           </div>

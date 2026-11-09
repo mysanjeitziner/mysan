@@ -1,13 +1,12 @@
+
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { authClient } from '@/lib/auth-client'
 
 export default function AdminLogout() {
   const router = useRouter()
-  const supabase = createClient()
-
   const [loading, setLoading] = useState(false)
 
   async function handleLogout() {
@@ -20,19 +19,26 @@ export default function AdminLogout() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signOut()
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            router.replace('/login')
+            router.refresh()
+          },
+          onError: (context) => {
+            console.error(
+              'Logout Fehler:',
+              context.error
+            )
 
-      if (error) {
-        throw error
-      }
+            alert(
+              'Die Abmeldung konnte nicht durchgeführt werden.'
+            )
 
-      // Zur Login-Seite
-      router.replace('/login')
-
-      // Server-Komponenten neu laden,
-      // damit die Session überall aktualisiert wird.
-      router.refresh()
-
+            setLoading(false)
+          },
+        },
+      })
     } catch (error) {
       console.error('Logout Fehler:', error)
 
@@ -76,4 +82,3 @@ export default function AdminLogout() {
     </button>
   )
 }
-

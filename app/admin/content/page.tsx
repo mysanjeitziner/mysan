@@ -1,10 +1,25 @@
-import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { sql } from '@/lib/neon'
+import { getAdminUser } from '@/lib/auth-admin'
 
 import {
   deleteHeroImage,
   saveHeroImage,
   updateHeroSettings,
 } from './actions'
+
+type HeroMedia = {
+  id: string
+  page: string
+  media_type: string
+  storage_path: string | null
+  public_url: string | null
+  alt_text: string | null
+  opacity: number | null
+  visible: boolean
+  created_at: string
+  updated_at: string
+}
 
 const PAGES = [
   {
@@ -26,69 +41,35 @@ const PAGES = [
 ]
 
 export default async function AdminContentPage() {
-
-  const supabase = await createClient()
-
-  /* =========================================================
-     ADMIN CHECK
-  ========================================================= */
-
-  const {
-    data: {
-      user,
-    },
-  } = await supabase.auth.getUser()
+  // ADMIN-CHECK – BETTER AUTH + NEON
+  const user = await getAdminUser()
 
   if (!user) {
-    return (
-      <main className="p-10">
-        <h1 className="text-2xl">
-          Nicht angemeldet
-        </h1>
-      </main>
-    )
+    redirect('/admin/login')
   }
 
-  if (
-    user.app_metadata?.role !== 'admin'
-  ) {
-    return (
-      <main className="p-10">
-        <h1 className="text-2xl">
-          Keine Berechtigung
-        </h1>
-      </main>
-    )
-  }
+  // HERO MEDIEN – NEON
+  const media = (await sql`
+    SELECT
+      id,
+      page,
+      media_type,
+      storage_path,
+      public_url,
+      alt_text,
+      opacity,
+      visible,
+      created_at,
+      updated_at
+    FROM public.page_media
+    WHERE media_type = ${'hero'}
+  `) as HeroMedia[]
 
-  /* =========================================================
-     HERO MEDIEN
-  ========================================================= */
+  const mediaMap = new Map(
+    media.map((item) => [item.page, item])
+  )
 
-  const {
-    data: media,
-  } = await supabase
-    .from('page_media')
-    .select('*')
-    .eq(
-      'media_type',
-      'hero'
-    )
-
-  const mediaMap =
-    new Map(
-      (media || []).map(
-        (item) => [
-          item.page,
-          item,
-        ]
-      )
-    )
-
-  /* =========================================================
-     RENDER
-  ========================================================= */
-
+  // RENDER
   return (
     <main
       className="
@@ -99,15 +80,10 @@ export default async function AdminContentPage() {
         md:px-10
       "
     >
-
       <div className="mx-auto max-w-7xl">
 
-        {/* =================================================
-            HEADER
-        ================================================= */}
-
+        {/* HEADER */}
         <div className="mb-10">
-
           <p
             className="
               text-xs
@@ -120,42 +96,21 @@ export default async function AdminContentPage() {
             mySan Jeitziner GmbH
           </p>
 
-          <h1
-            className="
-              mt-2
-              text-4xl
-              font-light
-            "
-          >
+          <h1 className="mt-2 text-4xl font-light">
             Website Inhalte
           </h1>
 
-          <p
-            className="
-              mt-3
-              text-neutral-500
-            "
-          >
+          <p className="mt-3 text-neutral-500">
             Texte und Hero-Bilder der Website verwalten.
           </p>
-
         </div>
 
-        {/* =================================================
-            HERO BILDER
-        ================================================= */}
-
+        {/* HERO BILDER */}
         <div className="grid gap-8 lg:grid-cols-2">
-
           {PAGES.map((page) => {
-
-            const item =
-              mediaMap.get(
-                page.key
-              )
+            const item = mediaMap.get(page.key)
 
             return (
-
               <section
                 key={page.key}
                 className="
@@ -167,11 +122,7 @@ export default async function AdminContentPage() {
                   shadow-sm
                 "
               >
-
-                {/* =================================================
-                    HEADER
-                ================================================= */}
-
+                {/* HEADER */}
                 <div
                   className="
                     border-b
@@ -180,63 +131,27 @@ export default async function AdminContentPage() {
                     py-5
                   "
                 >
-
-                  <h2
-                    className="
-                      text-xl
-                      font-medium
-                    "
-                  >
+                  <h2 className="text-xl font-medium">
                     {page.title}
                   </h2>
 
-                  <p
-                    className="
-                      mt-1
-                      text-sm
-                      text-neutral-500
-                    "
-                  >
+                  <p className="mt-1 text-sm text-neutral-500">
                     Hero-Bild
                   </p>
-
                 </div>
 
-                {/* =================================================
-                    BILD
-                ================================================= */}
-
-                <div
-                  className="
-                    aspect-[16/8]
-                    bg-[#f4f7fa]
-                  "
-                >
-
+                {/* BILD */}
+                <div className="aspect-[16/8] bg-[#f4f7fa]">
                   {item?.public_url ? (
-
                     <img
-                      src={
-                        item.public_url
-                      }
-                      alt={
-                        item.alt_text ||
-                        page.title
-                      }
-                      className="
-                        h-full
-                        w-full
-                        object-cover
-                      "
+                      src={item.public_url}
+                      alt={item.alt_text || page.title}
+                      className="h-full w-full object-cover"
                       style={{
-                        opacity:
-                          item.opacity ??
-                          0.18,
+                        opacity: item.opacity ?? 0.18,
                       }}
                     />
-
                   ) : (
-
                     <div
                       className="
                         flex
@@ -249,61 +164,34 @@ export default async function AdminContentPage() {
                     >
                       Kein Hero-Bild vorhanden
                     </div>
-
                   )}
-
                 </div>
 
-                {/* =================================================
-                    CONTROLS
-                ================================================= */}
-
+                {/* CONTROLS */}
                 <div className="space-y-6 p-6">
 
-                  {/* =================================================
-                      UPLOAD
-                  ================================================= */}
-
+                  {/* UPLOAD */}
                   <form
-                    action={async (
-                      formData: FormData
-                    ) => {
-                      await saveHeroImage(
-                        formData
-                      )
+                    action={async (formData: FormData) => {
+                      'use server'
+                      await saveHeroImage(formData)
                     }}
-                    className="
-                      space-y-3
-                    "
+                    className="space-y-3"
                   >
-
                     <input
                       type="hidden"
                       name="page"
-                      value={
-                        page.key
-                      }
+                      value={page.key}
                     />
 
-                    <label
-                      className="
-                        block
-                        text-sm
-                        font-medium
-                      "
-                    >
+                    <label className="block text-sm font-medium">
                       Neues Bild
                     </label>
 
                     <input
                       type="file"
                       name="file"
-                      accept="
-                        image/jpeg,
-                        image/png,
-                        image/webp,
-                        image/avif
-                      "
+                      accept="image/jpeg,image/png,image/webp,image/avif"
                       required
                       className="
                         block
@@ -333,26 +221,16 @@ export default async function AdminContentPage() {
                         hover:opacity-90
                       "
                     >
-                      {item
-                        ? 'Bild ersetzen'
-                        : 'Bild hochladen'}
+                      {item ? 'Bild ersetzen' : 'Bild hochladen'}
                     </button>
-
                   </form>
 
-                  {/* =================================================
-                      OPACITY
-                  ================================================= */}
-
+                  {/* OPACITY UND SICHTBARKEIT */}
                   {item && (
-
                     <form
-                      action={async (
-                        formData: FormData
-                      ) => {
-                        await updateHeroSettings(
-                          formData
-                        )
+                      action={async (formData: FormData) => {
+                        'use server'
+                        await updateHeroSettings(formData)
                       }}
                       className="
                         space-y-4
@@ -361,39 +239,23 @@ export default async function AdminContentPage() {
                         pt-5
                       "
                     >
-
                       <input
                         type="hidden"
                         name="page"
-                        value={
-                          page.key
-                        }
+                        value={page.key}
                       />
 
                       <div>
-
                         <label
                           htmlFor={`opacity-${page.key}`}
-                          className="
-                            block
-                            text-sm
-                            font-medium
-                          "
+                          className="block text-sm font-medium"
                         >
                           Bildstärke
                         </label>
 
-                        <p
-                          className="
-                            mt-1
-                            text-xs
-                            text-neutral-500
-                          "
-                        >
-                          0 = unsichtbar ·
-                          1 = vollständig sichtbar
+                        <p className="mt-1 text-xs text-neutral-500">
+                          0 = unsichtbar · 1 = vollständig sichtbar
                         </p>
-
                       </div>
 
                       <input
@@ -403,10 +265,7 @@ export default async function AdminContentPage() {
                         min="0"
                         max="1"
                         step="0.05"
-                        defaultValue={
-                          item.opacity ??
-                          0.18
-                        }
+                        defaultValue={item.opacity ?? 0.18}
                         className="
                           w-full
                           rounded-lg
@@ -419,11 +278,7 @@ export default async function AdminContentPage() {
 
                       <select
                         name="visible"
-                        defaultValue={
-                          item.visible
-                            ? 'true'
-                            : 'false'
-                        }
+                        defaultValue={item.visible ? 'true' : 'false'}
                         className="
                           w-full
                           rounded-lg
@@ -433,7 +288,6 @@ export default async function AdminContentPage() {
                           py-2
                         "
                       >
-
                         <option value="true">
                           Bild anzeigen
                         </option>
@@ -441,7 +295,6 @@ export default async function AdminContentPage() {
                         <option value="false">
                           Bild ausblenden
                         </option>
-
                       </select>
 
                       <button
@@ -460,24 +313,15 @@ export default async function AdminContentPage() {
                       >
                         Einstellungen speichern
                       </button>
-
                     </form>
-
                   )}
 
-                  {/* =================================================
-                      DELETE
-                  ================================================= */}
-
+                  {/* LÖSCHEN */}
                   {item && (
-
                     <form
-                      action={async (
-                        formData: FormData
-                      ) => {
-                        await deleteHeroImage(
-                          formData
-                        )
+                      action={async (formData: FormData) => {
+                        'use server'
+                        await deleteHeroImage(formData)
                       }}
                       className="
                         border-t
@@ -485,13 +329,10 @@ export default async function AdminContentPage() {
                         pt-5
                       "
                     >
-
                       <input
                         type="hidden"
                         name="page"
-                        value={
-                          page.key
-                        }
+                        value={page.key}
                       />
 
                       <button
@@ -505,22 +346,15 @@ export default async function AdminContentPage() {
                       >
                         Hero-Bild löschen
                       </button>
-
                     </form>
-
                   )}
 
                 </div>
-
               </section>
-
             )
           })}
-
         </div>
-
       </div>
-
     </main>
   )
 }

@@ -1,3 +1,4 @@
+
 {
   "name": "mysan",
   "version": "0.1.0",
@@ -6,17 +7,25 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate:images": "node --env-file=.env.local scripts/migrate-images.mjs"
   },
   "dependencies": {
+    "@neon/config": "^1.9.1",
+    "@neon/env": "^1.6.1",
+    "@neondatabase/serverless": "^1.2.0",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.2",
+    "aws4fetch": "^1.0.20",
+    "better-auth": "^1.7.7",
+    "cloudinary": "^2.11.0",
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "resend": "^6.19.0"
   },
   "devDependencies": {
+    "@better-auth/cli": "^1.4.22",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

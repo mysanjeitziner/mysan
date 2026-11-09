@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState } from 'react'
@@ -15,19 +14,17 @@ export default function DeleteReferenceButton({
   title,
 }: Props) {
   const router = useRouter()
-  const supabase = createClient()
-
   const [deleting, setDeleting] = useState(false)
 
   /*
-   * =========================================================
-   * ALLE DATEIEN IN EINEM STORAGE-ORDNER REKURSIV SUCHEN
-   * =========================================================
+   * Supabase wird weiterhin ausschliesslich
+   * für den Storage der Bilder verwendet.
    */
 
   async function getAllStorageFiles(
     folder: string
   ): Promise<string[]> {
+    const supabase = createClient()
     const result: string[] = []
 
     const { data, error } = await supabase.storage
@@ -37,7 +34,9 @@ export default function DeleteReferenceButton({
       })
 
     if (error) {
-      throw error
+      throw new Error(
+        `Bilder konnten nicht geladen werden: ${error.message}`
+      )
     }
 
     if (!data) {
@@ -48,9 +47,8 @@ export default function DeleteReferenceButton({
       const path = `${folder}/${item.name}`
 
       /*
-       * Supabase liefert Dateien und Ordner ähnlich.
-       * Eine Datei besitzt normalerweise eine id.
-       * Ordner besitzen diese nicht.
+       * Dateien besitzen normalerweise eine ID.
+       * Ordner werden rekursiv durchsucht.
        */
 
       if (item.id) {
@@ -66,12 +64,6 @@ export default function DeleteReferenceButton({
     return result
   }
 
-  /*
-   * =========================================================
-   * REFERENZ LÖSCHEN
-   * =========================================================
-   */
-
   async function handleDelete() {
     const confirmed = window.confirm(
       `Möchtest du die Referenz "${title}" wirklich löschen?\n\nDie Referenz und alle zugehörigen Bilder werden endgültig gelöscht.`
@@ -83,87 +75,69 @@ export default function DeleteReferenceButton({
 
     try {
       /*
-       * -----------------------------------------------------
-       * 1. ALLE STORAGE-DATEIEN FINDEN
-       * -----------------------------------------------------
+       * 1. Bilder im Supabase Storage finden
        */
 
       const folder = `references/${id}`
-
       const storageFiles =
         await getAllStorageFiles(folder)
 
       /*
-       * -----------------------------------------------------
-       * 2. STORAGE-DATEIEN LÖSCHEN
-       * -----------------------------------------------------
+       * 2. Bilder aus Supabase Storage löschen
        */
 
       if (storageFiles.length > 0) {
-        /*
-         * Supabase empfiehlt kleinere Pakete.
-         * Deshalb löschen wir in Blöcken.
-         */
+        const supabase = createClient()
 
         for (
           let i = 0;
           i < storageFiles.length;
           i += 100
         ) {
-          const batch =
-            storageFiles.slice(i, i + 100)
+          const batch = storageFiles.slice(i, i + 100)
 
-          const { error: storageError } =
-            await supabase.storage
-              .from('images')
-              .remove(batch)
+          const { error } = await supabase.storage
+            .from('images')
+            .remove(batch)
 
-          if (storageError) {
-            throw storageError
+          if (error) {
+            throw new Error(
+              `Bilder konnten nicht gelöscht werden: ${error.message}`
+            )
           }
         }
       }
 
       /*
-       * -----------------------------------------------------
-       * 3. EINTRÄGE AUS reference_images LÖSCHEN
-       * -----------------------------------------------------
+       * 3. Referenz über die serverseitige API löschen.
+       * Die API verwendet Neon und prüft die Admin-Berechtigung.
        */
 
-      const { error: imagesError } =
-        await supabase
-          .from('reference_images')
-          .delete()
-          .eq('reference_id', id)
+      const response = await fetch(
+        `/api/admin/referenzen/${encodeURIComponent(id)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
 
-      if (imagesError) {
-        throw imagesError
+      const result = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+            result?.message ||
+            'Die Referenz konnte nicht aus der Datenbank gelöscht werden.'
+        )
       }
 
       /*
-       * -----------------------------------------------------
-       * 4. REFERENZ AUS references LÖSCHEN
-       * -----------------------------------------------------
-       */
-
-      const { error: referenceError } =
-        await supabase
-          .from('references')
-          .delete()
-          .eq('id', id)
-
-      if (referenceError) {
-        throw referenceError
-      }
-
-      /*
-       * -----------------------------------------------------
-       * 5. SEITE AKTUALISIEREN
-       * -----------------------------------------------------
+       * 4. Admin-Übersicht aktualisieren
        */
 
       router.refresh()
-
     } catch (error) {
       console.error(
         'Fehler beim Löschen der Referenz:',
@@ -200,10 +174,7 @@ export default function DeleteReferenceButton({
         disabled:opacity-50
       "
     >
-      {deleting
-        ? 'Löschen...'
-        : 'Löschen'}
+      {deleting ? 'Löschen...' : 'Löschen'}
     </button>
   )
 }
-

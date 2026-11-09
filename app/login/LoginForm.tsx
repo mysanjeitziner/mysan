@@ -1,88 +1,56 @@
-
 'use client'
 
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { authClient } from '@/lib/auth-client'
 
 const MYSAN_BLUE = '#1dabff'
 
 export default function LoginForm() {
   const router = useRouter()
-  const supabase = createClient()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleLogin(
-    event: FormEvent<HTMLFormElement>
-  ) {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     setError('')
     setLoading(true)
 
     try {
-      // 1. Bei Supabase anmelden
-      const { data, error: loginError } =
-        await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        })
+      const result = await authClient.signIn.email({
+        email: email.trim().toLowerCase(),
+        password,
+      })
 
-      if (loginError) {
-        console.error('SUPABASE LOGIN ERROR:', loginError)
-
+      if (result.error) {
+        console.error('BETTER AUTH LOGIN ERROR:', result.error)
         setError('E-Mail oder Passwort ist falsch.')
         return
       }
 
-      // 2. Prüfen, ob Supabase eine Session zurückgegeben hat
-      if (!data.session || !data.user) {
-        console.error('SUPABASE LOGIN DEBUG:', {
-          hasSession: Boolean(data.session),
-          hasUser: Boolean(data.user),
-        })
+      const sessionResult = await authClient.getSession()
 
+      if (sessionResult.error || !sessionResult.data?.session) {
+        console.error(
+          'BETTER AUTH SESSION CHECK ERROR:',
+          sessionResult.error
+        )
         setError(
-          'Die Anmeldung war nicht vollständig. Bitte versuche es erneut.'
+          'Die Anmeldung wurde nicht bestätigt. Bitte versuche es erneut.'
         )
         return
       }
 
-      console.log('SUPABASE LOGIN SUCCESS:', {
-        authenticated: true,
-        userId: data.user.id,
-        hasAccessToken: Boolean(data.session.access_token),
-      })
-
-      // 3. Prüfen, ob die Session im Browser abrufbar ist
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession()
-
-      if (sessionError || !session) {
-        console.error('SUPABASE SESSION CHECK ERROR:', {
-          message: sessionError?.message ?? 'Keine Session vorhanden',
-        })
-
-        setError(
-          'Die Anmeldung wurde nicht gespeichert. Bitte lade die Seite neu und versuche es erneut.'
-        )
-        return
-      }
-
-      // 4. Erst nach erfolgreicher Prüfung in den Admin-Bereich
       router.replace('/admin')
       router.refresh()
     } catch (err) {
-      console.error('LOGIN UNEXPECTED ERROR:', err)
-
+      console.error('BETTER AUTH LOGIN UNEXPECTED ERROR:', err)
       setError(
-        'Beim Anmelden ist ein unerwarteter Fehler aufgetreten.'
+        'Beim Anmelden ist ein Fehler aufgetreten. Bitte versuche es erneut.'
       )
     } finally {
       setLoading(false)
@@ -91,14 +59,12 @@ export default function LoginForm() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#F4F7FA] px-6">
-      {/* Linker blauer Rand */}
       <div
         className="fixed left-0 top-0 h-full w-2"
         style={{ backgroundColor: MYSAN_BLUE }}
       />
 
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="mb-8 flex justify-center">
           <img
             src="/logo.jpg"
@@ -107,7 +73,6 @@ export default function LoginForm() {
           />
         </div>
 
-        {/* Login Box */}
         <div className="rounded-2xl bg-white p-8 shadow-sm md:p-10">
           <div className="mb-8">
             <div
@@ -132,7 +97,6 @@ export default function LoginForm() {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
-            {/* E-Mail */}
             <div>
               <label
                 htmlFor="email"
@@ -148,17 +112,11 @@ export default function LoginForm() {
                 onChange={(event) => setEmail(event.target.value)}
                 required
                 autoComplete="email"
-                placeholder="admin@mysan.ch"
-                className="
-                  w-full rounded-lg border border-neutral-200
-                  bg-white px-4 py-3 text-sm outline-none transition
-                  focus:border-[#1dabff] focus:ring-2
-                  focus:ring-[#1dabff]/20
-                "
+                placeholder="info@mysan.ch"
+                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#1dabff] focus:ring-2 focus:ring-[#1dabff]/20"
               />
             </div>
 
-            {/* Passwort */}
             <div>
               <label
                 htmlFor="password"
@@ -175,16 +133,10 @@ export default function LoginForm() {
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="
-                  w-full rounded-lg border border-neutral-200
-                  bg-white px-4 py-3 text-sm outline-none transition
-                  focus:border-[#1dabff] focus:ring-2
-                  focus:ring-[#1dabff]/20
-                "
+                className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#1dabff] focus:ring-2 focus:ring-[#1dabff]/20"
               />
             </div>
 
-            {/* Fehler */}
             {error && (
               <div
                 role="alert"
@@ -194,15 +146,10 @@ export default function LoginForm() {
               </div>
             )}
 
-            {/* Button */}
             <button
               type="submit"
               disabled={loading}
-              className="
-                w-full rounded-lg px-4 py-3 text-sm font-semibold
-                text-white transition hover:opacity-90
-                disabled:cursor-not-allowed disabled:opacity-50
-              "
+              className="w-full rounded-lg px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               style={{ backgroundColor: MYSAN_BLUE }}
             >
               {loading ? 'Anmelden...' : 'Anmelden'}
@@ -210,7 +157,6 @@ export default function LoginForm() {
           </form>
         </div>
 
-        {/* Zur Website */}
         <div className="mt-6 text-center">
           <a
             href="/"

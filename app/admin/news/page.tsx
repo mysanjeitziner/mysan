@@ -1,37 +1,58 @@
+
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { sql } from '@/lib/neon'
+
+type NewsItem = {
+  id: string
+  title: string
+  slug: string
+  excerpt: string | null
+  image_url: string | null
+  published: boolean
+  featured: boolean
+  created_at: string
+}
 
 export default async function NewsPage() {
-  const supabase = await createClient()
+  let news: NewsItem[] = []
+  let errorMessage: string | null = null
 
-  const { data: news, error } = await supabase
-    .from('news')
-    .select(`
-      id,
-      title,
-      slug,
-      excerpt,
-      image_url,
-      published,
-      featured,
-      created_at
-    `)
-    .order('created_at', { ascending: false })
+  try {
+    const result = await sql`
+      SELECT
+        id,
+        title,
+        slug,
+        excerpt,
+        image_url,
+        published,
+        featured,
+        created_at
+      FROM public.news
+      ORDER BY created_at DESC
+    `
 
-  if (error) {
-    return (
-      <main className="p-8">
-        <div className="mx-auto max-w-7xl">
-          <h1 className="text-3xl font-bold">
-            News
-          </h1>
+    news = result.map((item) => ({
+      id: String(item.id),
+      title: String(item.title),
+      slug: String(item.slug),
+      excerpt: item.excerpt == null
+        ? null
+        : String(item.excerpt),
+      image_url: item.image_url == null
+        ? null
+        : String(item.image_url),
+      published: Boolean(item.published),
+      featured: Boolean(item.featured),
+      created_at: String(item.created_at),
+    }))
+  } catch (error) {
+    console.error('ADMIN NEWS LOAD ERROR:', error)
 
-          <div className="mt-6 rounded-xl bg-red-50 p-4 text-red-700">
-            {error.message}
-          </div>
-        </div>
-      </main>
-    )
+    errorMessage =
+      error instanceof Error
+        ? error.message
+        : 'Die News konnten nicht geladen werden.'
   }
 
   return (
@@ -41,14 +62,13 @@ export default async function NewsPage() {
         {/* HEADER */}
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
           <div>
             <h1 className="text-3xl font-bold md:text-4xl">
               News
             </h1>
 
             <p className="mt-2 text-gray-500">
-              Neuigkeiten und aktuelle Informationen von mysan Jeitziner GmbH
+              Neuigkeiten und aktuelle Informationen von mySan Jeitziner GmbH
             </p>
           </div>
 
@@ -58,130 +78,116 @@ export default async function NewsPage() {
           >
             + Neue News
           </Link>
-
         </div>
+
+        {/* FEHLER */}
+
+        {errorMessage && (
+          <div className="mt-6 rounded-xl bg-red-50 p-4 text-red-700">
+            {errorMessage}
+          </div>
+        )}
 
         {/* NEWS */}
 
-        <div className="mt-8 overflow-hidden rounded-2xl bg-white shadow-sm">
+        {!errorMessage && (
+          <div className="mt-8 overflow-hidden rounded-2xl bg-white shadow-sm">
+            {news.length > 0 ? (
+              <div className="divide-y">
+                {news.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex flex-col gap-5 p-5 transition hover:bg-gray-50 md:flex-row md:items-center"
+                  >
+                    {/* BILD */}
 
-          {news && news.length > 0 ? (
-
-            <div className="divide-y">
-
-              {news.map((item) => (
-
-                <div
-                  key={item.id}
-                  className="flex flex-col gap-5 p-5 transition hover:bg-gray-50 md:flex-row md:items-center"
-                >
-
-                  {/* BILD */}
-
-                  <div className="h-24 w-full shrink-0 overflow-hidden rounded-xl bg-gray-100 md:w-36">
-
-                    {item.image_url ? (
-                      <img
-                        src={item.image_url}
-                        alt={item.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-gray-400">
-                        Kein Bild
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* INHALT */}
-
-                  <div className="min-w-0 flex-1">
-
-                    <div className="flex flex-wrap items-center gap-2">
-
-                      <h2 className="font-semibold">
-                        {item.title}
-                      </h2>
-
-                      {item.featured && (
-                        <span className="rounded-full bg-black px-2.5 py-1 text-xs text-white">
-                          Startseite
-                        </span>
+                    <div className="h-24 w-full shrink-0 overflow-hidden rounded-xl bg-gray-100 md:w-36">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                          Kein Bild
+                        </div>
                       )}
-
                     </div>
 
-                    {item.excerpt && (
-                      <p className="mt-1 line-clamp-2 text-sm text-gray-500">
-                        {item.excerpt}
+                    {/* INHALT */}
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="font-semibold">
+                          {item.title}
+                        </h2>
+
+                        {item.featured && (
+                          <span className="rounded-full bg-black px-2.5 py-1 text-xs text-white">
+                            Startseite
+                          </span>
+                        )}
+                      </div>
+
+                      {item.excerpt && (
+                        <p className="mt-1 line-clamp-2 text-sm text-gray-500">
+                          {item.excerpt}
+                        </p>
+                      )}
+
+                      <p className="mt-2 text-xs text-gray-400">
+                        {new Date(
+                          item.created_at
+                        ).toLocaleDateString('de-CH')}
                       </p>
-                    )}
+                    </div>
 
-                    <p className="mt-2 text-xs text-gray-400">
-                      {new Date(
-                        item.created_at
-                      ).toLocaleDateString('de-CH')}
-                    </p>
+                    {/* STATUS */}
 
+                    <div className="shrink-0">
+                      {item.published ? (
+                        <span className="rounded-full bg-green-100 px-3 py-1.5 text-xs font-medium text-green-700">
+                          Veröffentlicht
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-500">
+                          Entwurf
+                        </span>
+                      )}
+                    </div>
+
+                    {/* BEARBEITEN */}
+
+                    <Link
+                      href={`/admin/news/${item.id}`}
+                      className="shrink-0 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-white"
+                    >
+                      Bearbeiten
+                    </Link>
                   </div>
-
-                  {/* STATUS */}
-
-                  <div className="shrink-0">
-
-                    {item.published ? (
-                      <span className="rounded-full bg-green-100 px-3 py-1.5 text-xs font-medium text-green-700">
-                        Veröffentlicht
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-500">
-                        Entwurf
-                      </span>
-                    )}
-
-                  </div>
-
-                  {/* BEARBEITEN */}
-
-                  <Link
-                    href={`/admin/news/${item.id}`}
-                    className="shrink-0 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-white"
-                  >
-                    Bearbeiten
-                  </Link>
-
+                ))}
+              </div>
+            ) : (
+              <div className="p-12 text-center">
+                <div className="text-lg font-medium">
+                  Noch keine News vorhanden
                 </div>
 
-              ))}
+                <p className="mt-2 text-sm text-gray-500">
+                  Erstelle deine erste News.
+                </p>
 
-            </div>
-
-          ) : (
-
-            <div className="p-12 text-center">
-
-              <div className="text-lg font-medium">
-                Noch keine News vorhanden
+                <Link
+                  href="/admin/news/neu"
+                  className="mt-5 inline-flex rounded-xl bg-black px-5 py-3 text-sm font-medium text-white hover:bg-gray-800"
+                >
+                  + Neue News
+                </Link>
               </div>
-
-              <p className="mt-2 text-sm text-gray-500">
-                Erstelle deine erste News.
-              </p>
-
-              <Link
-                href="/admin/news/neu"
-                className="mt-5 inline-flex rounded-xl bg-black px-5 py-3 text-sm font-medium text-white hover:bg-gray-800"
-              >
-                + Neue News
-              </Link>
-
-            </div>
-
-          )}
-
-        </div>
-
+            )}
+          </div>
+        )}
       </div>
     </main>
   )
